@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { KHUJAND } from "../config/khujand";
+import type { CityProfile } from "../config/cities";
 import { fallbackForecast } from "../data/fallbackWeather";
 import { fetchOpenMeteoForecast, type ForecastResult } from "../lib/openMeteo";
 import type { DataLoad } from "../types/dataLoad";
@@ -8,26 +8,29 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Forecast request failed.";
 }
 
-function fallbackForecastResult(): ForecastResult {
+function fallbackForecastResult(city: CityProfile): ForecastResult {
   return {
     days: fallbackForecast,
     metadata: {
-      requestedLatitude: KHUJAND.center.lat,
-      requestedLongitude: KHUJAND.center.lon,
+      requestedLatitude: city.center.lat,
+      requestedLongitude: city.center.lon,
+      timezone: city.timezone,
       fetchedAtIso: new Date().toISOString(),
       source: "Local sample",
     },
   };
 }
 
-export function useForecastData() {
+export function useForecastData(city: CityProfile) {
   const [forecastLoad, setForecastLoad] = useState<DataLoad<ForecastResult>>({ status: "loading" });
 
   useEffect(() => {
     const controller = new AbortController();
     const forceFailure = new URLSearchParams(window.location.search).has("forceForecastFailure");
 
-    fetchOpenMeteoForecast({ forceFailure, signal: controller.signal })
+    setForecastLoad({ status: "loading" });
+
+    fetchOpenMeteoForecast(city, { forceFailure, signal: controller.signal })
       .then((result) => {
         setForecastLoad({ status: "live", data: result });
       })
@@ -36,7 +39,7 @@ export function useForecastData() {
 
         setForecastLoad({
           status: "fallback",
-          data: fallbackForecastResult(),
+          data: fallbackForecastResult(city),
           error: errorMessage(error),
         });
       });
@@ -44,7 +47,7 @@ export function useForecastData() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [city]);
 
   return forecastLoad;
 }

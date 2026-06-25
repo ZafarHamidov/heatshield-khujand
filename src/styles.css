@@ -68,7 +68,7 @@ a {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  max-width: 760px;
+  max-width: 980px;
 }
 
 .language-select {
@@ -341,6 +341,34 @@ p {
 .zone-row span {
   color: #62716d;
   font-size: 0.86rem;
+}
+
+.city-data-panel .compact-list strong {
+  color: #17201d;
+}
+
+.city-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d9e0df;
+  border-radius: 8px;
+  background: #fbfcfa;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.city-score span {
+  color: #64736f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.city-score strong {
+  color: #0f6b63;
+  font-size: 1.35rem;
 }
 
 .evidence-strip {

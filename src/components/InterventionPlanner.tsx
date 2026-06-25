@@ -1,8 +1,8 @@
 import { Trees } from "lucide-react";
-import { riskZones } from "../data/riskZones";
+import type { RiskZone } from "../data/riskZones";
 import type { LocaleCopy } from "../i18n";
 
-export function InterventionPlanner({ copy }: { copy: LocaleCopy }) {
+export function InterventionPlanner({ copy, riskZones }: { copy: LocaleCopy; riskZones: RiskZone[] }) {
   return (
     <section className="panel">
       <div className="section-heading">

@@ -1,4 +1,4 @@
-import { KHUJAND } from "../config/khujand";
+import type { CityProfile } from "../config/cities";
 import type { ForecastDay } from "./openMeteo";
 
 export type HeatState = "Normal" | "Watch" | "Danger" | "Trigger-like";
@@ -11,7 +11,7 @@ export type HeatAssessment = {
   explanation: string;
 };
 
-export function assessHeatRisk(days: ForecastDay[]): HeatAssessment {
+export function assessHeatRisk(days: ForecastDay[], city: CityProfile): HeatAssessment {
   if (days.length === 0) {
     return {
       state: "Watch",
@@ -20,19 +20,19 @@ export function assessHeatRisk(days: ForecastDay[]): HeatAssessment {
     };
   }
 
-  const threshold = KHUJAND.trigger.temperatureC;
+  const threshold = city.trigger.temperatureC;
   const hottestDay = [...days].sort((a, b) => b.maxTempC - a.maxTempC)[0];
   const maxTempC = hottestDay.maxTempC;
   const consecutiveTriggerDays = longestThresholdRun(days, threshold);
 
-  if (consecutiveTriggerDays >= KHUJAND.trigger.consecutiveDays) {
+  if (consecutiveTriggerDays >= city.trigger.consecutiveDays) {
     return {
       state: "Trigger-like",
       hottestDay,
       maxTempC,
       consecutiveTriggerDays,
       explanation:
-        "Forecast temperatures resemble the official heatwave trigger pattern. Treat this as non-official early intelligence and follow Tajik Hydromet or local authority warnings.",
+        "Forecast temperatures resemble the selected heatwave trigger pattern. Treat this as non-official early intelligence and follow local authority warnings.",
     };
   }
 
@@ -43,7 +43,7 @@ export function assessHeatRisk(days: ForecastDay[]): HeatAssessment {
       maxTempC,
       consecutiveTriggerDays,
       explanation:
-        "At least one forecast day meets or exceeds the Khujand/Sughd heat threshold. Prioritize vulnerable people and outdoor activities.",
+        "At least one forecast day meets or exceeds the selected city heat threshold. Prioritize vulnerable people and outdoor activities.",
     };
   }
 

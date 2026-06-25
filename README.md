@@ -1,6 +1,6 @@
 # HeatShield Khujand
 
-HeatShield Khujand is a public heat-risk dashboard prototype for Khujand, Tajikistan. It combines a non-official live forecast, IFRC/Tajikistan EAP trigger context, a dynamic hotspot map, multilingual public guidance, and a transparent scientific risk model.
+HeatShield Khujand is a public heat-risk dashboard prototype that started with Khujand, Tajikistan and now supports multiple cities. It combines a non-official live forecast, city heat-threshold context, a dynamic hotspot map, multilingual public guidance, and a transparent scientific risk model.
 
 Live site:
 
@@ -8,10 +8,11 @@ https://zafarhamidov.github.io/heatshield-khujand/
 
 ## What It Shows
 
-- Non-official Open-Meteo forecast for Khujand.
+- City selector for Khujand, Dushanbe, Tashkent, Central Asia peers, and high-data global benchmark cities.
+- Non-official Open-Meteo forecast for the selected city.
 - IFRC/Tajikistan EAP heatwave trigger context for Khujand/Sughd.
 - Hourly hotspot dynamics with a date/time slider.
-- OSM-derived 650 m scientific risk grid.
+- OSM-derived 650 m scientific risk grid for Khujand and lower-confidence screening grids for other cities.
 - Heat action guidance in English, Russian, and Tajik.
 - Source audit and data limitations.
 

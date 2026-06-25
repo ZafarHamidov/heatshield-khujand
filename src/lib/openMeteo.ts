@@ -1,4 +1,4 @@
-import { KHUJAND } from "../config/khujand";
+import type { CityProfile } from "../config/cities";
 
 export type ForecastDay = {
   date: string;
@@ -53,15 +53,15 @@ type FetchOpenMeteoForecastOptions = {
   signal?: AbortSignal;
 };
 
-export async function fetchOpenMeteoForecast(options: FetchOpenMeteoForecastOptions = {}): Promise<ForecastResult> {
+export async function fetchOpenMeteoForecast(city: CityProfile, options: FetchOpenMeteoForecastOptions = {}): Promise<ForecastResult> {
   if (options.forceFailure) {
     throw new Error("Forced Open-Meteo failure for local verification.");
   }
 
   const params = new URLSearchParams({
-    latitude: String(KHUJAND.center.lat),
-    longitude: String(KHUJAND.center.lon),
-    timezone: "Asia/Dushanbe",
+    latitude: String(city.center.lat),
+    longitude: String(city.center.lon),
+    timezone: city.timezone,
     forecast_days: "7",
     daily:
       "temperature_2m_max,temperature_2m_min,apparent_temperature_max,relative_humidity_2m_mean,wind_speed_10m_max,uv_index_max,wet_bulb_temperature_2m_max",
@@ -93,8 +93,8 @@ export async function fetchOpenMeteoForecast(options: FetchOpenMeteoForecastOpti
       wetBulbMaxC: daily.wet_bulb_temperature_2m_max?.[index],
     })),
     metadata: {
-      requestedLatitude: KHUJAND.center.lat,
-      requestedLongitude: KHUJAND.center.lon,
+      requestedLatitude: city.center.lat,
+      requestedLongitude: city.center.lon,
       resolvedLatitude: payload.latitude,
       resolvedLongitude: payload.longitude,
       timezone: payload.timezone,

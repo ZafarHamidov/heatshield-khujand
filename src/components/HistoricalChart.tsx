@@ -8,13 +8,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { KHUJAND } from "../config/khujand";
+import type { CityProfile } from "../config/cities";
 import type { LocaleCopy } from "../i18n";
 import type { HistoricalDay } from "../lib/nasaPower";
 import type { DataLoad } from "../types/dataLoad";
 import { formatDate, formatShortDate } from "../utils/format";
 
-export function HistoricalChart({ copy, historicalLoad }: { copy: LocaleCopy; historicalLoad: DataLoad<HistoricalDay[]> }) {
+export function HistoricalChart({ copy, city, historicalLoad }: { copy: LocaleCopy; city: CityProfile; historicalLoad: DataLoad<HistoricalDay[]> }) {
   const historical = historicalLoad.data ?? [];
   const hasData = historical.length > 0 && (historicalLoad.status === "live" || historicalLoad.status === "fallback");
 
@@ -40,7 +40,7 @@ export function HistoricalChart({ copy, historicalLoad }: { copy: LocaleCopy; hi
             <XAxis dataKey="date" interval="preserveStartEnd" tickFormatter={formatShortDate} tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 12 }} unit="C" />
             <Tooltip formatter={(value: number) => [`${value.toFixed(1)}C`, "Daily max"]} labelFormatter={formatDate} />
-            <ReferenceLine y={KHUJAND.trigger.temperatureC} stroke="#b42318" strokeDasharray="5 5" />
+            <ReferenceLine y={city.trigger.temperatureC} stroke="#b42318" strokeDasharray="5 5" />
             <Area
               type="monotone"
               dataKey="maxTempC"

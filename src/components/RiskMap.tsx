@@ -1,21 +1,24 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { CircleMarker, MapContainer, Polygon, Polyline, Popup, Rectangle, TileLayer } from "react-leaflet";
-import { KHUJAND, RIVER_CORRIDOR } from "../config/khujand";
-import { scientificModel } from "../data/generated/scientificHotspots";
-import { riskZones } from "../data/riskZones";
+import type { CityProfile } from "../config/cities";
+import type { RiskZone } from "../data/riskZones";
 import type { LocaleCopy } from "../i18n";
 import { buildHotspotFrames, hottestHourIndex, hotspotTone } from "../lib/hotspots";
 import type { HourlyForecastResult } from "../lib/hourlyForecast";
+import { getCityScientificModel } from "../lib/cityScreeningGrid";
 import { buildScientificCellFrames } from "../lib/scientificRisk";
+import type { ScientificCellInput } from "../lib/scientificRisk";
 import type { DataLoad } from "../types/dataLoad";
 
 type RiskMapProps = {
   copy: LocaleCopy;
+  city: CityProfile;
+  riskZones: RiskZone[];
   hourlyLoad: DataLoad<HourlyForecastResult>;
 };
 
-export function RiskMap({ copy, hourlyLoad }: RiskMapProps) {
+export function RiskMap({ copy, city, riskZones, hourlyLoad }: RiskMapProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showCooling, setShowCooling] = useState(false);
   const [showScientificGrid, setShowScientificGrid] = useState(true);
@@ -27,11 +30,12 @@ export function RiskMap({ copy, hourlyLoad }: RiskMapProps) {
   const hasHourly = points.length > 0 && (hourlyLoad.status === "live" || hourlyLoad.status === "fallback");
   const safeIndex = Math.min(selectedIndex, Math.max(0, points.length - 1));
   const selectedPoint = points[safeIndex];
-  const frames = useMemo(() => buildHotspotFrames(hourly, safeIndex), [hourly, safeIndex]);
+  const cityScientificModel = useMemo(() => getCityScientificModel(city), [city]);
+  const frames = useMemo(() => buildHotspotFrames(hourly, safeIndex, riskZones), [hourly, riskZones, safeIndex]);
   const frameByZone = useMemo(() => new Map(frames.map((frame) => [frame.zoneId, frame])), [frames]);
   const scientificFrames = useMemo(
-    () => buildScientificCellFrames(hourly, safeIndex, hourlyLoad.status),
-    [hourly, hourlyLoad.status, safeIndex],
+    () => buildScientificCellFrames(cityScientificModel.cells, cityScientificModel.generatedAt, hourly, safeIndex, hourlyLoad.status),
+    [cityScientificModel, hourly, hourlyLoad.status, safeIndex],
   );
   const scientificFrameByCell = useMemo(
     () => new Map(scientificFrames.map((frame) => [frame.cellId, frame])),
@@ -67,15 +71,15 @@ export function RiskMap({ copy, hourlyLoad }: RiskMapProps) {
   }, [isPlaying, points.length]);
 
   const bounds: [[number, number], [number, number]] = [
-    [KHUJAND.bbox.south, KHUJAND.bbox.west],
-    [KHUJAND.bbox.north, KHUJAND.bbox.east],
+    [city.bbox.south, city.bbox.west],
+    [city.bbox.north, city.bbox.east],
   ];
 
   const cityPolygon: [number, number][] = [
-    [KHUJAND.bbox.south, KHUJAND.bbox.west],
-    [KHUJAND.bbox.south, KHUJAND.bbox.east],
-    [KHUJAND.bbox.north, KHUJAND.bbox.east],
-    [KHUJAND.bbox.north, KHUJAND.bbox.west],
+    [city.bbox.south, city.bbox.west],
+    [city.bbox.south, city.bbox.east],
+    [city.bbox.north, city.bbox.east],
+    [city.bbox.north, city.bbox.west],
   ];
 
   return (
@@ -166,20 +170,20 @@ export function RiskMap({ copy, hourlyLoad }: RiskMapProps) {
         ) : null}
       </div>
 
-      <MapContainer center={[KHUJAND.center.lat, KHUJAND.center.lon]} zoom={13} scrollWheelZoom className="map">
+      <MapContainer key={city.id} center={[city.center.lat, city.center.lon]} zoom={city.id === "khujand" ? 13 : 11} scrollWheelZoom className="map">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Rectangle bounds={bounds} pathOptions={{ color: "#0f6b63", weight: 2, dashArray: "6 8", fillOpacity: 0.04 }} />
         <Polygon positions={cityPolygon} pathOptions={{ color: "#0f6b63", weight: 1, fillOpacity: 0.03 }} />
-        {showCooling ? (
-          <Polyline positions={RIVER_CORRIDOR} pathOptions={{ color: "#2d80b3", weight: 2, opacity: 0.38, dashArray: "4 8" }}>
+        {showCooling && city.riverCorridor?.length ? (
+          <Polyline positions={city.riverCorridor} pathOptions={{ color: "#2d80b3", weight: 2, opacity: 0.38, dashArray: "4 8" }}>
             <Popup>{copy.map.riverContext}</Popup>
           </Polyline>
         ) : null}
         {showScientificGrid
-          ? scientificModel.cells.map((cell) => {
+          ? cityScientificModel.cells.map((cell) => {
               const frame = scientificFrameByCell.get(cell.id);
               const score = frame?.score0to100 ?? cell.score0to100;
               const tone = hotspotTone(frame?.riskLevel0to4 ?? cell.riskLevel0to4);
@@ -240,7 +244,7 @@ export function RiskMap({ copy, hourlyLoad }: RiskMapProps) {
             })
           : null}
         <CircleMarker
-          center={[KHUJAND.center.lat, KHUJAND.center.lon]}
+          center={[city.center.lat, city.center.lon]}
           radius={7}
           pathOptions={{ color: "#111827", fillColor: "#ffffff", fillOpacity: 1 }}
         >
@@ -349,7 +353,7 @@ function formatFullTime(timeIso: string) {
   return `${date} ${time?.slice(0, 5) ?? ""}`.trim();
 }
 
-function componentRows(copy: LocaleCopy, components: (typeof scientificModel.cells)[number]["components"]) {
+function componentRows(copy: LocaleCopy, components: ScientificCellInput["components"]) {
   return [
     { label: copy.scientific.surfaceHeatProxy, value: percent(components.surfaceHeatProxy) },
     { label: copy.scientific.lowShadeProxy, value: percent(components.lowShadeProxy) },
@@ -376,6 +380,11 @@ function driverLabel(copy: LocaleCopy, driver: string) {
     "solar radiation": copy.scientific.solarRadiation,
     "heat persistence": copy.scientific.heatPersistence,
     "low wind": copy.scientific.lowWind,
+    surfaceHeatProxy: copy.scientific.surfaceHeatProxy,
+    lowShadeProxy: copy.scientific.lowShadeProxy,
+    populationExposureProxy: copy.scientific.populationExposureProxy,
+    vulnerableFacilities: copy.scientific.vulnerableFacilities,
+    transportMarketExposure: copy.scientific.transportMarketExposure,
   };
 
   return labels[driver] ?? driver;

@@ -1,10 +1,10 @@
 import { AlertTriangle, Building2, CheckCircle2, Droplets, Hospital, MapPin, School, Users, Waves } from "lucide-react";
-import { KHUJAND } from "../config/khujand";
-import { scientificModel } from "../data/generated/scientificHotspots";
-import { riskZones, type RiskZone } from "../data/riskZones";
+import type { CityProfile } from "../config/cities";
+import type { RiskZone } from "../data/riskZones";
 import type { LocaleCopy } from "../i18n";
 import { interpolate } from "../i18n";
 import type { ForecastResult } from "../lib/openMeteo";
+import { getCityScientificModel } from "../lib/cityScreeningGrid";
 import { scientificRiskMethod } from "../lib/scientificRisk";
 import type { DataLoad } from "../types/dataLoad";
 
@@ -17,32 +17,26 @@ const zoneIcon = {
   "Cooling corridor": Waves,
 } satisfies Record<RiskZone["type"], typeof MapPin>;
 
-export function TriggerPanel({ copy }: { copy: LocaleCopy }) {
+export function TriggerPanel({ copy, city }: { copy: LocaleCopy; city: CityProfile }) {
   return (
     <article className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">{copy.trigger.eyebrow}</p>
-          <h2>{copy.trigger.title}</h2>
+          <p className="eyebrow">{city.trigger.official ? copy.trigger.eyebrow : city.dataTier}</p>
+          <h2>{city.trigger.official ? copy.trigger.title : copy.trigger.planningTitle}</h2>
         </div>
         <AlertTriangle aria-hidden="true" size={28} />
       </div>
-      <p>
-        {interpolate(copy.trigger.body, {
-          temp: KHUJAND.trigger.temperatureC,
-          days: KHUJAND.trigger.consecutiveDays,
-          season: KHUJAND.trigger.season,
-        })}
-      </p>
+      <p>{triggerBody(copy, city)}</p>
       <div className="callout">
         <CheckCircle2 aria-hidden="true" size={18} />
-        <span>{KHUJAND.trigger.officialSource}</span>
+        <span>{city.trigger.officialSource}</span>
       </div>
     </article>
   );
 }
 
-export function PriorityPanel({ copy }: { copy: LocaleCopy }) {
+export function PriorityPanel({ copy, riskZones }: { copy: LocaleCopy; riskZones: RiskZone[] }) {
   const topZones = riskZones.slice(0, 4);
 
   return (
@@ -71,6 +65,34 @@ export function PriorityPanel({ copy }: { copy: LocaleCopy }) {
           );
         })}
       </div>
+    </article>
+  );
+}
+
+export function CityDataPanel({ copy, city }: { copy: LocaleCopy; city: CityProfile }) {
+  return (
+    <article className="panel city-data-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">{city.region}</p>
+          <h2>
+            {city.name}, {city.country}
+          </h2>
+        </div>
+        <MapPin aria-hidden="true" size={28} />
+      </div>
+      <p>{city.climateContext}</p>
+      <div className="city-score">
+        <span>Data readiness</span>
+        <strong>{city.dataScore0to100}/100</strong>
+      </div>
+      <ul className="compact-list">
+        {city.dataCoverage.slice(0, 5).map((item) => (
+          <li key={`${item.label}-${item.status}`}>
+            <strong>{item.label}</strong>: {item.status} - {item.note}
+          </li>
+        ))}
+      </ul>
     </article>
   );
 }
@@ -146,10 +168,11 @@ export function BenchmarkPanels({ copy }: { copy: LocaleCopy }) {
   );
 }
 
-export function ScientificModelPanel({ copy }: { copy: LocaleCopy }) {
-  const topCells = scientificModel.topCellIds
-    .map((id) => scientificModel.cells.find((cell) => cell.id === id))
-    .filter((cell): cell is (typeof scientificModel.cells)[number] => Boolean(cell))
+export function ScientificModelPanel({ copy, city }: { copy: LocaleCopy; city: CityProfile }) {
+  const cityScientificModel = getCityScientificModel(city);
+  const topCells = cityScientificModel.topCellIds
+    .map((id) => cityScientificModel.cells.find((cell) => cell.id === id))
+    .filter((cell): cell is (typeof cityScientificModel.cells)[number] => Boolean(cell))
     .slice(0, 5);
 
   return (
@@ -166,8 +189,8 @@ export function ScientificModelPanel({ copy }: { copy: LocaleCopy }) {
       <div className="science-meta-grid">
         <ScienceStat label={copy.scientific.modelVersion} value={scientificRiskMethod.modelVersion} />
         <ScienceStat label={copy.scientific.riskEquation} value={copy.method.formula} />
-        <ScienceStat label={copy.scientific.cellSize} value={`${scientificModel.cellSizeMeters} m`} />
-        <ScienceStat label={copy.scientific.generated} value={scientificModel.generatedAt.slice(0, 10)} />
+        <ScienceStat label={copy.scientific.cellSize} value={`${cityScientificModel.cellSizeMeters} m`} />
+        <ScienceStat label={copy.scientific.generated} value={cityScientificModel.generatedAt.slice(0, 10)} />
       </div>
 
       <div className="science-columns">
@@ -194,7 +217,7 @@ export function ScientificModelPanel({ copy }: { copy: LocaleCopy }) {
         <div>
           <h3>{copy.scientific.sourceCounts}</h3>
           <ul className="compact-list">
-            {Object.entries(scientificModel.sourceCounts).map(([key, value]) => (
+            {Object.entries(cityScientificModel.sourceCounts).map(([key, value]) => (
               <li key={key}>
                 {key}: {value}
               </li>
@@ -225,14 +248,14 @@ export function ScientificModelPanel({ copy }: { copy: LocaleCopy }) {
       </div>
 
       <div className="science-layer-grid">
-        <LayerList title={copy.scientific.integratedLayers} items={scientificModel.integratedLayers} />
-        <LayerList title={copy.scientific.proxyLayers} items={scientificModel.proxyLayers} />
-        <LayerList title={copy.scientific.missingLayers} items={scientificModel.missingValidatedLayers} />
+        <LayerList title={copy.scientific.integratedLayers} items={cityScientificModel.integratedLayers} />
+        <LayerList title={copy.scientific.proxyLayers} items={cityScientificModel.proxyLayers} />
+        <LayerList title={copy.scientific.missingLayers} items={cityScientificModel.missingValidatedLayers} />
       </div>
-      {scientificModel.overpassFailures.length ? (
+      {cityScientificModel.overpassFailures.length ? (
         <div className="science-warning">
           <strong>{copy.scientific.dataWarnings}</strong>
-          <span>{scientificModel.overpassFailures.join("; ")}</span>
+          <span>{cityScientificModel.overpassFailures.join("; ")}</span>
         </div>
       ) : null}
       <div className="science-warning science-note">
@@ -309,4 +332,22 @@ function componentLabel(copy: LocaleCopy, key: string) {
   };
 
   return labels[key] ?? key;
+}
+
+function triggerBody(copy: LocaleCopy, city: CityProfile) {
+  if (city.trigger.official) {
+    return interpolate(copy.trigger.body, {
+      temp: city.trigger.temperatureC,
+      days: city.trigger.consecutiveDays,
+      season: city.trigger.season,
+    });
+  }
+
+  return interpolate(copy.trigger.cityBody, {
+    city: city.name,
+    basis: city.trigger.official ? copy.trigger.officialLabel : copy.trigger.planningLabel,
+    temp: city.trigger.temperatureC,
+    days: city.trigger.consecutiveDays,
+    season: city.trigger.season,
+  });
 }

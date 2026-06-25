@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { CityProfile } from "../config/cities";
 import { fallbackHistorical } from "../data/fallbackWeather";
 import { fetchNasaPowerSample, type HistoricalDay } from "../lib/nasaPower";
 import type { DataLoad } from "../types/dataLoad";
@@ -7,13 +8,15 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "NASA POWER request failed.";
 }
 
-export function useHistoricalData() {
+export function useHistoricalData(city: CityProfile) {
   const [historicalLoad, setHistoricalLoad] = useState<DataLoad<HistoricalDay[]>>({ status: "loading" });
 
   useEffect(() => {
     let active = true;
 
-    fetchNasaPowerSample()
+    setHistoricalLoad({ status: "loading" });
+
+    fetchNasaPowerSample(city)
       .then((days) => {
         if (!active) return;
         setHistoricalLoad({ status: "live", data: days });
@@ -30,7 +33,7 @@ export function useHistoricalData() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [city]);
 
   return historicalLoad;
 }

@@ -1,4 +1,4 @@
-import { KHUJAND } from "../config/khujand";
+import type { CityProfile } from "../config/cities";
 
 export type HistoricalDay = {
   date: string;
@@ -15,12 +15,12 @@ type NasaPowerResponse = {
   };
 };
 
-export async function fetchNasaPowerSample(): Promise<HistoricalDay[]> {
+export async function fetchNasaPowerSample(city: CityProfile): Promise<HistoricalDay[]> {
   const params = new URLSearchParams({
     parameters: "T2M_MAX,T2M_MIN,RH2M,WS10M,ALLSKY_SFC_SW_DWN",
     community: "AG",
-    longitude: String(KHUJAND.center.lon),
-    latitude: String(KHUJAND.center.lat),
+    longitude: String(city.center.lon),
+    latitude: String(city.center.lat),
     start: "20250701",
     end: "20250707",
     format: "JSON",

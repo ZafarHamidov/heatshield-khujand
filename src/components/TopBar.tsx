@@ -1,13 +1,16 @@
 import { ShieldAlert } from "lucide-react";
+import { CITY_PROFILES, type CityId, type CityProfile } from "../config/cities";
 import { languageOptions, type LanguageCode, type LocaleCopy } from "../i18n";
 
 type TopBarProps = {
   copy: LocaleCopy;
+  city: CityProfile;
   language: LanguageCode;
+  setCityId: (cityId: CityId) => void;
   setLanguage: (language: LanguageCode) => void;
 };
 
-export function TopBar({ copy, language, setLanguage }: TopBarProps) {
+export function TopBar({ copy, city, language, setCityId, setLanguage }: TopBarProps) {
   return (
     <header className="topbar">
       <div>
@@ -15,6 +18,16 @@ export function TopBar({ copy, language, setLanguage }: TopBarProps) {
         <h1>{copy.app.title}</h1>
       </div>
       <div className="topbar-actions">
+        <label className="language-select">
+          <span>{copy.app.cityLabel}</span>
+          <select value={city.id} onChange={(event) => setCityId(event.target.value as CityId)}>
+            {CITY_PROFILES.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}, {option.country}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="language-select">
           <span>{copy.app.languageLabel}</span>
           <select value={language} onChange={(event) => setLanguage(event.target.value as LanguageCode)}>

@@ -1,4 +1,3 @@
-import { scientificModel } from "../data/generated/scientificHotspots";
 import type { DataLoad } from "../types/dataLoad";
 import type { HourlyForecastResult, HourlyWeatherPoint } from "./hourlyForecast";
 
@@ -22,7 +21,22 @@ export type ScientificCellRiskFrame = {
   topDrivers: string[];
 };
 
-type ScientificCell = (typeof scientificModel.cells)[number];
+export type ScientificCellInput = {
+  id: string;
+  center: readonly [number, number];
+  boundary: readonly (readonly [number, number])[];
+  score0to100: number;
+  riskLevel0to4: 0 | 1 | 2 | 3 | 4;
+  components: {
+    surfaceHeatProxy: number;
+    lowShadeProxy: number;
+    populationExposureProxy: number;
+    vulnerableFacilities: number;
+    transportMarketExposure: number;
+  };
+  drivers: readonly string[];
+  confidence: string;
+};
 
 export const scientificRiskMethod = {
   modelVersion: "dynamic-ipcc-heatrisk-v0.3",
@@ -51,6 +65,8 @@ export const scientificRiskMethod = {
 } as const;
 
 export function buildScientificCellFrames(
+  cells: readonly ScientificCellInput[],
+  generatedAt: string,
   hourly: HourlyForecastResult | undefined,
   selectedIndex: number,
   loadStatus: DataLoad<HourlyForecastResult>["status"],
@@ -58,9 +74,9 @@ export function buildScientificCellFrames(
   const hasWeather = Boolean(hourly?.points.length && (loadStatus === "live" || loadStatus === "fallback"));
   const point = hasWeather ? hourly?.points[Math.min(selectedIndex, hourly.points.length - 1)] : undefined;
 
-  return scientificModel.cells.map((cell) => {
+  return cells.map((cell) => {
     if (!point || !hourly?.points.length) {
-      return baselineFrame(cell);
+      return baselineFrame(cell, generatedAt);
     }
 
     return scoreCellAtHour(cell, point, hourly.points, selectedIndex, loadStatus);
@@ -75,7 +91,7 @@ export function riskLevelFromScore(score: number): 0 | 1 | 2 | 3 | 4 {
   return 0;
 }
 
-function baselineFrame(cell: ScientificCell): ScientificCellRiskFrame {
+function baselineFrame(cell: ScientificCellInput, generatedAt: string): ScientificCellRiskFrame {
   const exposure = exposureScore(cell);
   const vulnerability = vulnerabilityScore(cell);
   const adaptiveCapacityGap = adaptiveCapacityGapScore(cell);
@@ -84,7 +100,7 @@ function baselineFrame(cell: ScientificCell): ScientificCellRiskFrame {
   const confidence0to100 = confidenceScore(cell, "loading");
 
   return {
-    timeIso: scientificModel.generatedAt,
+    timeIso: generatedAt,
     cellId: cell.id,
     score0to100,
     riskLevel0to4: riskLevelFromScore(score0to100),
@@ -99,7 +115,7 @@ function baselineFrame(cell: ScientificCell): ScientificCellRiskFrame {
 }
 
 function scoreCellAtHour(
-  cell: ScientificCell,
+  cell: ScientificCellInput,
   point: HourlyWeatherPoint,
   allPoints: HourlyWeatherPoint[],
   selectedIndex: number,
@@ -152,7 +168,7 @@ function scoreCellAtHour(
   };
 }
 
-function localApparentTemperature(point: HourlyWeatherPoint, cell: ScientificCell) {
+function localApparentTemperature(point: HourlyWeatherPoint, cell: ScientificCellInput) {
   const builtSurfaceBoost = cell.components.surfaceHeatProxy * 2.1;
   const shadePenalty = cell.components.lowShadeProxy * 1.25;
   const crowdingStreetPenalty = cell.components.transportMarketExposure * 0.75;
@@ -161,7 +177,7 @@ function localApparentTemperature(point: HourlyWeatherPoint, cell: ScientificCel
   return point.apparentTempC + builtSurfaceBoost + shadePenalty + crowdingStreetPenalty - windRelief;
 }
 
-function exposureScore(cell: ScientificCell) {
+function exposureScore(cell: ScientificCellInput) {
   return clamp01(
     0.58 * cell.components.populationExposureProxy +
       0.27 * cell.components.transportMarketExposure +
@@ -169,7 +185,7 @@ function exposureScore(cell: ScientificCell) {
   );
 }
 
-function vulnerabilityScore(cell: ScientificCell) {
+function vulnerabilityScore(cell: ScientificCellInput) {
   return clamp01(
     0.62 * cell.components.vulnerableFacilities +
       0.23 * cell.components.populationExposureProxy +
@@ -177,7 +193,7 @@ function vulnerabilityScore(cell: ScientificCell) {
   );
 }
 
-function adaptiveCapacityGapScore(cell: ScientificCell) {
+function adaptiveCapacityGapScore(cell: ScientificCellInput) {
   return clamp01(
     0.48 * cell.components.lowShadeProxy +
       0.27 * cell.components.transportMarketExposure +
@@ -200,7 +216,7 @@ function persistenceScore(points: HourlyWeatherPoint[], selectedIndex: number) {
   return clamp01(0.62 * hotHours + 0.38 * hotNightHours);
 }
 
-function confidenceScore(cell: ScientificCell, loadStatus: DataLoad<HourlyForecastResult>["status"]) {
+function confidenceScore(cell: ScientificCellInput, loadStatus: DataLoad<HourlyForecastResult>["status"]) {
   const osmSignal = clamp01(
     (cell.components.surfaceHeatProxy +
       cell.components.populationExposureProxy +
@@ -220,7 +236,7 @@ function uncertaintyBand(confidence0to100: number) {
 }
 
 function topDrivers(
-  cell: ScientificCell,
+  cell: ScientificCellInput,
   hazard: number,
   exposure: number,
   vulnerability: number,

@@ -1,4 +1,4 @@
-import { riskZones, type RiskZone } from "../data/riskZones";
+import type { RiskZone } from "../data/riskZones";
 import type { HourlyForecastResult, HourlyWeatherPoint } from "./hourlyForecast";
 
 export type ZoneHotspotFrame = {
@@ -12,7 +12,11 @@ export type ZoneHotspotFrame = {
   recommendedAction: string;
 };
 
-export function buildHotspotFrames(hourly: HourlyForecastResult | undefined, selectedIndex: number): ZoneHotspotFrame[] {
+export function buildHotspotFrames(
+  hourly: HourlyForecastResult | undefined,
+  selectedIndex: number,
+  riskZones: RiskZone[],
+): ZoneHotspotFrame[] {
   if (!hourly?.points.length) return [];
 
   return riskZones.map((zone) => {

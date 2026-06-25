@@ -3,6 +3,7 @@ dist/
 *.log
 *.tsbuildinfo
 heatshield-*.png
+multi-city-*.png
 shot*.png
 outputs/
 vite.config.d.ts

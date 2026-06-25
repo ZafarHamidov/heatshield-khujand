@@ -1,3 +1,5 @@
+import type { CityProfile } from "../config/cities";
+
 export type RiskZone = {
   id: string;
   name: string;
@@ -218,3 +220,199 @@ export const riskZones: RiskZone[] = [
     actions: ["Compare nearby street temperatures", "Protect tree cover", "Map cool routes", "Sensor validation transect"],
   },
 ];
+
+export function getRiskZonesForCity(city: CityProfile): RiskZone[] {
+  if (city.id === "khujand") return riskZones;
+
+  const { bbox } = city;
+  const latSpan = bbox.north - bbox.south;
+  const lonSpan = bbox.east - bbox.west;
+  const profile = city.urbanHeatProfile;
+
+  return [
+    {
+      id: `${city.id}-central-core`,
+      name: `${city.name} central public-space core`,
+      type: "Market",
+      position: pointInBbox(city, 0.51, 0.51),
+      boundary: boxBoundary(pointInBbox(city, 0.51, 0.51), latSpan * 0.12, lonSpan * 0.16),
+      boundaryType: "influence-zone",
+      boundaryConfidence: "needs local validation",
+      priority: "Very high",
+      confidence: "Prototype",
+      exposureProfile: {
+        shadeDeficit: clamp(profile.shadeGap + 0.08),
+        crowding: clamp(profile.populationExposure + 0.09),
+        pavementExposure: clamp(profile.builtIntensity + 0.07),
+        criticalService: clamp(profile.vulnerableFacilities - 0.05),
+        nightRetention: clamp(profile.nightRetention),
+        coolingAccessGap: clamp(profile.coolingAccessGap),
+      },
+      interventionOptions: [
+        { key: "shade", estimatedReduction: 12 },
+        { key: "water", estimatedReduction: 9 },
+        { key: "coolingRoom", estimatedReduction: 8 },
+      ],
+      why: "Central public areas concentrate outdoor exposure, pedestrian activity, markets, and transit transfers.",
+      actions: ["Shade queues and waiting areas", "Public water point", "Heat warning signage", "First-aid check point"],
+    },
+    {
+      id: `${city.id}-clinics`,
+      name: `${city.name} clinic and pharmacy access cluster`,
+      type: "Clinic",
+      position: pointInBbox(city, 0.58, 0.47),
+      boundary: boxBoundary(pointInBbox(city, 0.58, 0.47), latSpan * 0.1, lonSpan * 0.13),
+      boundaryType: "influence-zone",
+      boundaryConfidence: "needs local validation",
+      priority: "Very high",
+      confidence: "Prototype",
+      exposureProfile: {
+        shadeDeficit: clamp(profile.shadeGap),
+        crowding: clamp(profile.populationExposure),
+        pavementExposure: clamp(profile.builtIntensity),
+        criticalService: clamp(profile.vulnerableFacilities + 0.2),
+        nightRetention: clamp(profile.nightRetention),
+        coolingAccessGap: clamp(profile.coolingAccessGap - 0.04),
+      },
+      interventionOptions: [
+        { key: "coolingRoom", estimatedReduction: 15 },
+        { key: "water", estimatedReduction: 8 },
+        { key: "coolRoof", estimatedReduction: 7 },
+      ],
+      why: "Health services need continuity and cool triage capacity during heat illness surges.",
+      actions: ["Cooling room", "Backup water", "Vulnerable patient check-ins", "Priority outreach messages"],
+    },
+    {
+      id: `${city.id}-schools`,
+      name: `${city.name} school and child-safety zone`,
+      type: "School",
+      position: pointInBbox(city, 0.38, 0.58),
+      boundary: boxBoundary(pointInBbox(city, 0.38, 0.58), latSpan * 0.1, lonSpan * 0.13),
+      boundaryType: "influence-zone",
+      boundaryConfidence: "needs local validation",
+      priority: "High",
+      confidence: "Prototype",
+      exposureProfile: {
+        shadeDeficit: clamp(profile.shadeGap + 0.04),
+        crowding: clamp(profile.populationExposure - 0.02),
+        pavementExposure: clamp(profile.builtIntensity - 0.03),
+        criticalService: clamp(profile.vulnerableFacilities + 0.08),
+        nightRetention: clamp(profile.nightRetention - 0.08),
+        coolingAccessGap: clamp(profile.coolingAccessGap),
+      },
+      interventionOptions: [
+        { key: "shade", estimatedReduction: 13 },
+        { key: "coolRoof", estimatedReduction: 9 },
+        { key: "water", estimatedReduction: 6 },
+      ],
+      why: "Children are heat-vulnerable, and schoolyards can have high exposure when shade is limited.",
+      actions: ["Morning-only outdoor activity", "Shade canopy", "Cool classroom routine", "Water-break schedule"],
+    },
+    {
+      id: `${city.id}-residential-night-heat`,
+      name: `${city.name} residential night-heat retention area`,
+      type: "Residential",
+      position: pointInBbox(city, 0.66, 0.64),
+      boundary: boxBoundary(pointInBbox(city, 0.66, 0.64), latSpan * 0.15, lonSpan * 0.18),
+      boundaryType: "polygon",
+      boundaryConfidence: "needs local validation",
+      priority: "High",
+      confidence: "Prototype",
+      exposureProfile: {
+        shadeDeficit: clamp(profile.shadeGap + 0.06),
+        crowding: clamp(profile.populationExposure + 0.04),
+        pavementExposure: clamp(profile.builtIntensity + 0.08),
+        criticalService: clamp(profile.vulnerableFacilities - 0.08),
+        nightRetention: clamp(profile.nightRetention + 0.14),
+        coolingAccessGap: clamp(profile.coolingAccessGap + 0.09),
+      },
+      interventionOptions: [
+        { key: "coolRoof", estimatedReduction: 14 },
+        { key: "shade", estimatedReduction: 10 },
+        { key: "coolingRoom", estimatedReduction: 8 },
+      ],
+      why: "Dense residential blocks can hold heat overnight, increasing risk for older people and people without cooling.",
+      actions: ["Cool roof pilots", "Door-to-door vulnerable checks", "Night ventilation guidance", "Shared cooling space"],
+    },
+    {
+      id: `${city.id}-transport`,
+      name: `${city.name} main transport exposure corridor`,
+      type: "Transport",
+      position: pointInBbox(city, 0.48, 0.36),
+      boundary: boxBoundary(pointInBbox(city, 0.48, 0.36), latSpan * 0.09, lonSpan * 0.24),
+      boundaryType: "influence-zone",
+      boundaryConfidence: "needs local validation",
+      priority: "High",
+      confidence: "Prototype",
+      exposureProfile: {
+        shadeDeficit: clamp(profile.shadeGap + 0.1),
+        crowding: clamp(profile.transportMarketExposure + 0.05),
+        pavementExposure: clamp(profile.builtIntensity + 0.12),
+        criticalService: clamp(profile.vulnerableFacilities - 0.04),
+        nightRetention: clamp(profile.nightRetention),
+        coolingAccessGap: clamp(profile.coolingAccessGap + 0.05),
+      },
+      interventionOptions: [
+        { key: "transitShade", estimatedReduction: 15 },
+        { key: "water", estimatedReduction: 9 },
+        { key: "shade", estimatedReduction: 8 },
+      ],
+      why: "Transit users are exposed to direct sun, hot pavement, and waiting-time heat stress.",
+      actions: ["Shade bus stops", "Water refill points", "Heat signage", "Peak-hour service continuity"],
+    },
+    {
+      id: `${city.id}-cooling-gradient`,
+      name: `${city.name} cooling-gradient validation zone`,
+      type: "Cooling corridor",
+      position: pointInBbox(city, 0.32, 0.38),
+      boundary: boxBoundary(pointInBbox(city, 0.32, 0.38), latSpan * 0.13, lonSpan * 0.17),
+      boundaryType: "influence-zone",
+      boundaryConfidence: "needs local validation",
+      priority: "Medium",
+      confidence: "Prototype",
+      exposureProfile: {
+        shadeDeficit: clamp(profile.shadeGap - 0.18),
+        crowding: clamp(profile.populationExposure - 0.18),
+        pavementExposure: clamp(profile.builtIntensity - 0.22),
+        criticalService: clamp(profile.vulnerableFacilities - 0.18),
+        nightRetention: clamp(profile.nightRetention - 0.18),
+        coolingAccessGap: clamp(profile.coolingAccessGap - 0.16),
+      },
+      interventionOptions: [
+        { key: "shade", estimatedReduction: 6 },
+        { key: "water", estimatedReduction: 5 },
+        { key: "coolingRoom", estimatedReduction: 4 },
+      ],
+      why: "Lower-risk corridors help compare hot streets against possible cooling gradients and sensor transects.",
+      actions: ["Compare nearby street temperatures", "Protect tree cover", "Map cool routes", "Sensor validation transect"],
+    },
+  ];
+}
+
+function pointInBbox(city: CityProfile, lonFraction: number, latFraction: number): [number, number] {
+  const lat = city.bbox.south + (city.bbox.north - city.bbox.south) * latFraction;
+  const lon = city.bbox.west + (city.bbox.east - city.bbox.west) * lonFraction;
+
+  return [roundCoord(lat), roundCoord(lon)];
+}
+
+function boxBoundary(center: [number, number], latSpan: number, lonSpan: number): [number, number][] {
+  const [lat, lon] = center;
+  const halfLat = latSpan / 2;
+  const halfLon = lonSpan / 2;
+
+  return [
+    [roundCoord(lat + halfLat), roundCoord(lon - halfLon)],
+    [roundCoord(lat + halfLat), roundCoord(lon + halfLon)],
+    [roundCoord(lat - halfLat), roundCoord(lon + halfLon)],
+    [roundCoord(lat - halfLat), roundCoord(lon - halfLon)],
+  ];
+}
+
+function clamp(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function roundCoord(value: number) {
+  return Number(value.toFixed(6));
+}

@@ -1,4 +1,5 @@
 import { ThermometerSun } from "lucide-react";
+import type { CityProfile } from "../config/cities";
 import { formatCoordinate, formatDate, formatDateTime } from "../utils/format";
 import type { ForecastResult } from "../lib/openMeteo";
 import { heatStateTone, type HeatAssessment } from "../lib/risk";
@@ -7,11 +8,12 @@ import type { LocaleCopy } from "../i18n";
 
 type ForecastPanelProps = {
   copy: LocaleCopy;
+  city: CityProfile;
   forecastLoad: DataLoad<ForecastResult>;
   assessment?: HeatAssessment;
 };
 
-export function ForecastPanel({ copy, forecastLoad, assessment }: ForecastPanelProps) {
+export function ForecastPanel({ copy, city, forecastLoad, assessment }: ForecastPanelProps) {
   const latest = forecastLoad.data?.days[0];
   const hottest = assessment?.hottestDay ?? latest;
   const metadata = forecastLoad.data?.metadata;
@@ -53,7 +55,7 @@ export function ForecastPanel({ copy, forecastLoad, assessment }: ForecastPanelP
         </div>
         <div>
           <dt>{copy.forecast.timezone}</dt>
-          <dd>{metadata?.timezone ?? "Asia/Dushanbe"}</dd>
+          <dd>{metadata?.timezone ?? city.timezone}</dd>
         </div>
         <div>
           <dt>{copy.forecast.elevation}</dt>

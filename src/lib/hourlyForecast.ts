@@ -1,5 +1,5 @@
-import { KHUJAND } from "../config/khujand";
-import { riskZones } from "../data/riskZones";
+import type { CityProfile } from "../config/cities";
+import type { RiskZone } from "../data/riskZones";
 
 export type HourlyWeatherPoint = {
   timeIso: string;
@@ -43,16 +43,20 @@ type FetchHourlyOptions = {
   signal?: AbortSignal;
 };
 
-export async function fetchOpenMeteoHourlyForecast(options: FetchHourlyOptions = {}): Promise<HourlyForecastResult> {
+export async function fetchOpenMeteoHourlyForecast(
+  city: CityProfile,
+  riskZones: RiskZone[],
+  options: FetchHourlyOptions = {},
+): Promise<HourlyForecastResult> {
   if (options.forceFailure) {
     throw new Error("Forced Open-Meteo hourly failure for local verification.");
   }
 
-  const locations = [{ id: "city", position: [KHUJAND.center.lat, KHUJAND.center.lon] as [number, number] }, ...riskZones];
+  const locations = [{ id: "city", position: [city.center.lat, city.center.lon] as [number, number] }, ...riskZones];
   const params = new URLSearchParams({
     latitude: locations.map((location) => location.position[0]).join(","),
     longitude: locations.map((location) => location.position[1]).join(","),
-    timezone: "Asia/Dushanbe",
+    timezone: city.timezone,
     forecast_days: "7",
     hourly:
       "temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,uv_index,shortwave_radiation,wet_bulb_temperature_2m,is_day",

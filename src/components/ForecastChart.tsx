@@ -9,13 +9,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { KHUJAND } from "../config/khujand";
+import type { CityProfile } from "../config/cities";
 import type { ForecastResult } from "../lib/openMeteo";
 import type { DataLoad } from "../types/dataLoad";
 import { formatDate, formatShortDate, labelForChart } from "../utils/format";
 import type { LocaleCopy } from "../i18n";
 
-export function ForecastChart({ copy, forecastLoad }: { copy: LocaleCopy; forecastLoad: DataLoad<ForecastResult> }) {
+export function ForecastChart({ copy, city, forecastLoad }: { copy: LocaleCopy; city: CityProfile; forecastLoad: DataLoad<ForecastResult> }) {
   const forecast = forecastLoad.data?.days ?? [];
   const hasData = forecast.length > 0 && (forecastLoad.status === "live" || forecastLoad.status === "fallback");
 
@@ -35,7 +35,7 @@ export function ForecastChart({ copy, forecastLoad }: { copy: LocaleCopy; foreca
             <XAxis dataKey="date" interval="preserveStartEnd" tickFormatter={formatShortDate} tick={{ fontSize: 12 }} />
             <YAxis domain={["dataMin - 2", "dataMax + 2"]} tick={{ fontSize: 12 }} unit="C" />
             <Tooltip formatter={(value: number, name) => [`${value.toFixed(1)}C`, labelForChart(name)]} labelFormatter={formatDate} />
-            <ReferenceLine y={KHUJAND.trigger.temperatureC} stroke="#b42318" strokeDasharray="5 5" />
+            <ReferenceLine y={city.trigger.temperatureC} stroke="#b42318" strokeDasharray="5 5" />
             <Line
               type="monotone"
               dataKey="maxTempC"

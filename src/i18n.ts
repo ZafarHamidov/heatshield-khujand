@@ -8,6 +8,7 @@ export type LocaleCopy = {
     title: string;
     eyebrow: string;
     officialNote: string;
+    cityLabel: string;
     languageLabel: string;
   };
   common: {
@@ -44,7 +45,11 @@ export type LocaleCopy = {
   trigger: {
     eyebrow: string;
     title: string;
+    planningTitle: string;
     body: string;
+    cityBody: string;
+    officialLabel: string;
+    planningLabel: string;
   };
   priority: {
     eyebrow: string;
@@ -223,9 +228,10 @@ export type LocaleCopy = {
 const en: LocaleCopy = {
   languageName: "English",
   app: {
-    eyebrow: "HeatShield Khujand",
+    eyebrow: "HeatShield cities",
     title: "Live Heat-Risk Dashboard",
-    officialNote: "Official warnings: Tajik Hydromet and local authorities.",
+    officialNote: "Official warnings remain with each city's local authorities.",
+    cityLabel: "City",
     languageLabel: "Language",
   },
   common: {
@@ -252,7 +258,7 @@ const en: LocaleCopy = {
     timezone: "Timezone",
     elevation: "Elevation",
     fetched: "Fetched",
-    loadingDescription: "Checking Open-Meteo for Khujand. The risk state remains neutral until the live request resolves.",
+    loadingDescription: "Checking Open-Meteo for the selected city. The risk state remains neutral until the live request resolves.",
     unavailableDescription: "Forecast data is unavailable. Use official local warnings and heat precautions.",
     fallbackPrefix: "Sample fallback only",
     failure: "Live forecast failed",
@@ -263,16 +269,20 @@ const en: LocaleCopy = {
       "Trigger-like": "Trigger-like",
     },
     explanation: {
-      Normal: "Forecast heat is below the official trigger threshold, but hot-weather precautions still matter for vulnerable groups.",
-      Watch: "Forecast heat is near the official threshold. Prepare cooling actions before conditions intensify.",
-      Danger: "At least one forecast day meets or exceeds the Khujand/Sughd heat threshold. Prioritize vulnerable people and outdoor activities.",
-      "Trigger-like": "Forecast temperatures resemble the official heatwave trigger pattern. Treat this as non-official early intelligence.",
+      Normal: "Forecast heat is below the selected city threshold, but hot-weather precautions still matter for vulnerable groups.",
+      Watch: "Forecast heat is near the selected threshold. Prepare cooling actions before conditions intensify.",
+      Danger: "At least one forecast day meets or exceeds the selected city threshold. Prioritize vulnerable people and outdoor activities.",
+      "Trigger-like": "Forecast temperatures resemble the selected multi-day heat trigger pattern. Treat this as non-official early intelligence.",
     },
   },
   trigger: {
     eyebrow: "IFRC/Tajikistan EAP",
     title: "Khujand trigger context",
+    planningTitle: "City planning threshold",
     body: "Khujand and nearby Sughd districts are listed under a northern heatwave threshold of {temp}C for {days} consecutive days in {season}.",
+    cityBody: "{city} is using a {basis} of {temp}C for {days} consecutive days in {season}. Official warnings still come from local authorities.",
+    officialLabel: "official trigger",
+    planningLabel: "prototype planning threshold",
   },
   priority: {
     eyebrow: "Action ranking",
@@ -319,9 +329,9 @@ const en: LocaleCopy = {
   },
   map: {
     eyebrow: "City risk story",
-    title: "Khujand heat action map",
+    title: "City heat action map",
     badge: "prototype zones",
-    cityCenter: "Khujand city center",
+    cityCenter: "Selected city center",
     prototypeZone: "prototype heat planning zone",
     estimatedBoundary: "estimated heat-region boundary",
     boundaryConfidence: "Boundary confidence",
@@ -347,12 +357,12 @@ const en: LocaleCopy = {
     legendExtreme: "4 Extreme",
     loadingHourly: "Loading hourly forecast",
     fallbackHourly: "Sample hourly fallback",
-    riverContext: "Syr Darya cooling context, optional layer",
+    riverContext: "Cooling corridor context, optional layer",
   },
   charts: {
     outlookEyebrow: "7-day outlook",
     outlookTitle: "Forecast threshold check",
-    thresholdLine: "39.5C trigger line",
+    thresholdLine: "city threshold line",
     sampleFallback: "sample fallback",
     loading: "loading",
     unavailable: "unavailable",
@@ -497,9 +507,10 @@ const ru: LocaleCopy = {
   ...en,
   languageName: "Русский",
   app: {
-    eyebrow: "HeatShield Худжанд",
+    eyebrow: "HeatShield города",
     title: "Панель теплового риска",
-    officialNote: "Официальные предупреждения: Таджикгидромет и местные органы.",
+    officialNote: "Официальные предупреждения остаются за местными органами каждого города.",
+    cityLabel: "Город",
     languageLabel: "Язык",
   },
   common: {
@@ -527,7 +538,7 @@ const ru: LocaleCopy = {
     timezone: "Часовой пояс",
     elevation: "Высота",
     fetched: "Обновлено",
-    loadingDescription: "Проверяем Open-Meteo для Худжанда. Статус риска остается нейтральным до загрузки данных.",
+    loadingDescription: "Проверяем Open-Meteo для выбранного города. Статус риска остается нейтральным до загрузки данных.",
     unavailableDescription: "Прогноз недоступен. Используйте официальные местные предупреждения и меры защиты от жары.",
     fallbackPrefix: "Только пример резервных данных",
     failure: "Онлайн-прогноз не загрузился",
@@ -538,16 +549,20 @@ const ru: LocaleCopy = {
       "Trigger-like": "Похоже на триггер",
     },
     explanation: {
-      Normal: "Прогноз ниже официального порога, но меры защиты важны для уязвимых групп.",
-      Watch: "Жара близка к официальному порогу. Подготовьте охлаждающие действия заранее.",
-      Danger: "Хотя бы один день достигает или превышает порог для Худжанда/Согда. Приоритет — уязвимые люди и работа на улице.",
-      "Trigger-like": "Прогноз похож на официальный тепловой триггер. Это неофициальная ранняя аналитика.",
+      Normal: "Прогноз ниже выбранного городского порога, но меры защиты важны для уязвимых групп.",
+      Watch: "Жара близка к выбранному порогу. Подготовьте охлаждающие действия заранее.",
+      Danger: "Хотя бы один день достигает или превышает выбранный городской порог. Приоритет — уязвимые люди и работа на улице.",
+      "Trigger-like": "Прогноз похож на многодневный тепловой триггер выбранного города. Это неофициальная ранняя аналитика.",
     },
   },
   trigger: {
     eyebrow: "IFRC/Tajikistan EAP",
     title: "Официальный контекст порога",
+    planningTitle: "Городской порог планирования",
     body: "Худжанд и близлежащие районы Согда указаны с северным порогом жары {temp}C в течение {days} дней подряд в сезон {season}.",
+    cityBody: "{city} использует {basis}: {temp}C в течение {days} дней подряд в сезон {season}. Официальные предупреждения остаются за местными органами.",
+    officialLabel: "официальный триггер",
+    planningLabel: "прототипный порог планирования",
   },
   priority: {
     eyebrow: "Приоритет действий",
@@ -597,7 +612,7 @@ const ru: LocaleCopy = {
     eyebrow: "Городская карта риска",
     title: "Карта действий при жаре",
     badge: "прототип зон",
-    cityCenter: "Центр Худжанда",
+    cityCenter: "Центр выбранного города",
     prototypeZone: "прототип зоны теплового планирования",
     estimatedBoundary: "оценочная граница hotspot-региона",
     boundaryConfidence: "Надежность границы",
@@ -623,13 +638,13 @@ const ru: LocaleCopy = {
     legendExtreme: "4 Экстремальный",
     loadingHourly: "Загрузка почасового прогноза",
     fallbackHourly: "Пример почасовых данных",
-    riverContext: "Контекст охлаждения Сырдарьи, необязательный слой",
+    riverContext: "Контекст охлаждающего коридора, необязательный слой",
   },
   charts: {
     ...en.charts,
     outlookEyebrow: "Прогноз на 7 дней",
     outlookTitle: "Проверка порога",
-    thresholdLine: "линия порога 39.5C",
+    thresholdLine: "линия городского порога",
     sampleFallback: "пример данных",
     loading: "загрузка",
     unavailable: "недоступно",
@@ -775,9 +790,10 @@ const tg: LocaleCopy = {
   ...ru,
   languageName: "Тоҷикӣ",
   app: {
-    eyebrow: "HeatShield Хуҷанд",
+    eyebrow: "HeatShield шаҳрҳо",
     title: "Панели зиндаи хатари гармӣ",
-    officialNote: "Огоҳии расмӣ: Агентии обуҳавошиносӣ ва мақомоти маҳаллӣ.",
+    officialNote: "Огоҳиҳои расмӣ ба мақомоти маҳаллии ҳар шаҳр тааллуқ доранд.",
+    cityLabel: "Шаҳр",
     languageLabel: "Забон",
   },
   common: {
@@ -801,14 +817,18 @@ const tg: LocaleCopy = {
     hottestDay: "Рӯзи гармтарин",
     triggerStreak: "Рӯзҳои остона",
     data: "Маълумот",
-    loadingDescription: "Open-Meteo барои Хуҷанд санҷида мешавад. То бор шудани маълумот ҳолати риск бетараф мемонад.",
+    loadingDescription: "Open-Meteo барои шаҳри интихобшуда санҷида мешавад. То бор шудани маълумот ҳолати риск бетараф мемонад.",
     fallbackPrefix: "Танҳо маълумоти намунавии захиравӣ",
     failure: "Пешгӯии зинда бор нашуд",
   },
   trigger: {
     eyebrow: "IFRC/Tajikistan EAP",
     title: "Контексти остонаи расмӣ",
+    planningTitle: "Остонаи шаҳрӣ барои банақшагирӣ",
     body: "Хуҷанд ва ноҳияҳои наздики Суғд барои шимол остонаи гармии {temp}C дар давоми {days} рӯзи пайдарпай дар мавсими {season} доранд.",
+    cityBody: "{city} {basis}-ро истифода мебарад: {temp}C дар давоми {days} рӯзи пайдарпай дар мавсими {season}. Огоҳиҳои расмӣ аз мақомоти маҳаллӣ меоянд.",
+    officialLabel: "триггери расмӣ",
+    planningLabel: "остонаи прототипӣ барои банақшагирӣ",
   },
   priority: {
     eyebrow: "Афзалияти амал",
@@ -857,7 +877,7 @@ const tg: LocaleCopy = {
     ...ru.map,
     eyebrow: "Харитаи хатари шаҳр",
     title: "Харитаи амал ҳангоми гармӣ",
-    cityCenter: "Маркази Хуҷанд",
+    cityCenter: "Маркази шаҳри интихобшуда",
     prototypeZone: "минтақаи прототипии банақшагирии гармӣ",
     selectedHour: "Соати интихобшуда",
     date: "Сана",
