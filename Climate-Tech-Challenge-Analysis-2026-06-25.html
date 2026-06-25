@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Climate Tech Challenge Analysis</title>
+  <style>
+    :root {
+      --bg: #212121; --fg: #FFF; --user-bg: #303030;
+      --code-bg: #303030; --table-bdr: rgba(255,255,255,0.15);
+      --bq-bdr: rgba(255,255,255,0.3); --cb-bg: #111; --cb-bdr: transparent;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ui-sans-serif,-apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif;
+      font-size: 16px; background: var(--bg); color: var(--fg);
+      padding: 20px; margin: 0 auto; line-height: 1.6;
+    }
+    .header {
+      text-align: center; margin: 0 auto 30px;
+      border-bottom: 2px dashed var(--fg); padding-bottom: 15px; max-width: 1200px;
+    }
+    .title { font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+    .timestamp { font-size: 14px; margin-top: 10px; opacity: 0.7; }
+    .conversation { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .message { margin-bottom: 20px; padding: 10px 20px; border-radius: 18px; width: fit-content; clear: both; overflow: hidden; }
+    .user-message { float: right; max-width: 80%; background: var(--user-bg); }
+    .assistant-message { float: left; max-width: 95%; }
+    .content { user-select: text; overflow-wrap: break-word; }
+    .content img { max-height: 220px; width: auto; border-radius: 8px; margin: 8px 0; display: block; cursor: zoom-in; transition: opacity 0.15s; }
+    .content img:hover { opacity: 0.85; }
+    #lb { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9999; justify-content: center; align-items: center; cursor: zoom-out; }
+    #lb.open { display: flex; }
+    #lb img { max-width: 90vw; max-height: 90vh; border-radius: 10px; object-fit: contain; cursor: default; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+    .content h1 { font-size: 24px; margin: .67em 0; }
+    .content h2 { font-size: 20px; margin: .75em 0; }
+    .content h3 { font-size: 18px; margin: .83em 0; }
+    .content h4 { font-size: 16px; margin: 1.12em 0; }
+    .content h5 { font-size: 14px; margin: 1.5em 0; }
+    .content h6 { font-size: 12px; margin: 1.67em 0; }
+    table { border-collapse: collapse; font-size: 14px; width: 100%; margin: 16px 0; }
+    th, td { padding: 8px 16px; text-align: left; vertical-align: top; font-size: 14px; }
+    th { font-weight: 600; border-bottom: 2px solid var(--table-bdr); }
+    td { border-bottom: 1px solid var(--table-bdr); }
+    tr:last-child td { border-bottom: none; }
+    hr { border: none; border-top: 1px solid var(--table-bdr); margin: 28px 0; clear: both; }
+    blockquote { border-left: 4px solid var(--bq-bdr); margin: 8px 0; padding: 8px 0 8px 24px; font-weight: 500; }
+    li { margin: 10px 0; }
+    code { background: var(--code-bg); color: var(--fg); padding: 2px 5px; border-radius: 4px; font-size: .9em; }
+    .code-wrapper { border-radius: 8px; overflow: hidden; margin: 12px 0; }
+    .code-header {
+      background: #1a1a1a; padding: 8px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .code-header::before {
+      content: "</>"; font-size: 11px; color: #10a37f; font-weight: 700;
+    }
+    .code-lang { font-size: 13px; font-weight: 500; color: #ccc; font-family: inherit; }
+    .code-block {
+      background: var(--cb-bg) !important; color: #fff !important;
+      padding: 16px !important; margin: 0 !important; border-radius: 0 !important;
+      border: none !important;
+      font-family: "SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;
+      font-size: 14px !important; line-height: 1.5 !important;
+      overflow-x: auto !important; white-space: pre !important;
+    }
+    .code-block code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: inherit; }
+    .hljs { background: transparent; color: #f8f8f2; }
+    .hljs-keyword,.hljs-selector-tag { color: #ff79c6; }
+    .hljs-string,.hljs-attr { color: #f1fa8c; }
+    .hljs-number,.hljs-literal { color: #bd93f9; }
+    .hljs-title,.hljs-function,.hljs-section { color: #50fa7b; }
+    .hljs-comment,.hljs-quote { color: #6272a4; font-style: italic; }
+    .hljs-params { color: #f8f8f2; }
+    .hljs-built_in,.hljs-type { color: #8be9fd; }
+    .hljs-variable,.hljs-template-variable { color: #ffb86c; }
+    .hljs-attribute,.hljs-tag { color: #ff79c6; }
+    .hljs-name { color: #50fa7b; }
+    .hljs-regexp,.hljs-link { color: #f1fa8c; }
+    .hljs-symbol,.hljs-bullet { color: #bd93f9; }
+    .hljs-meta { color: #6272a4; }
+    .hljs-deletion { color: #ff5555; }
+    .hljs-addition { color: #50fa7b; }
+    .hljs-emphasis { font-style: italic; }
+    .hljs-strong { font-weight: bold; }
+    .entity { text-decoration: underline; text-underline-offset: 3px; }
+    sup.cite { font-size: 10px; line-height: 1; }
+    a.cite-num { text-decoration: none; color: #10a37f; font-weight: 600; margin: 0 1px; }
+
+    del { text-decoration: line-through; opacity: 0.7; }
+    .math-block { margin: 16px 0; text-align: center; overflow-x: auto; }
+    .footnotes { font-size: 13px; padding-left: 20px; margin-top: 4px; }
+    .footnotes li { margin: 4px 0; opacity: 0.75; }
+    .fn-back { text-decoration: none; margin-left: 4px; }
+    sup a { text-decoration: none; color: #10a37f; }
+    li input[type="checkbox"] { margin-right: 5px; pointer-events: none; vertical-align: middle; }
+        @media print {
+      .message { float: none !important; max-width: 100% !important; }
+      .code-block { white-space: pre-wrap !important; }
+    }
+  </style>
+  
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">Climate Tech Challenge Analysis</h1>
+    <div class="timestamp">6/25/2026, 12:37:45 PM</div>
+  </div>
+  <div class="conversation">
+    <div class="message user-message"><div class="content"><p>@Web searchI am participating at this challenge: https://www.sbs.ox.ac.uk/climate-change-challenge/oxford-said-global-climate-tech-challenge-2026. And I want to analyze data and have some of the interesting and applicable dependencies and findings for extreme weather events. (Storms, floods, droughts, forest fires and heatwaves are becoming more frequent and severe.</p>
+
+<p>Imagine: How can we predict and prepare for these events? Could you create tools that help communities adapt or recover faster? What role could data, sensors or new materials play in building resilience?) Can you research this theme do give me a background of this topic. How effective will be my data analysis, and if effective enough provide me big real datasets</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>I’ll ground this in authoritative climate, disaster-risk, and open-data sources, then translate it into challenge-ready analysis directions and datasets you can actually use.</p></div></div>
+    <div class="message user-message"><div class="content"><p>@Web search also analyze what else could I do to this topic</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>I’ll focus the framing on local impact and decision support, comparing prediction, early warning, sensors, recovery logistics, and resilience materials rather than only forecasting hazards.</p></div></div>
+    <div class="message assistant-message"><div class="content"><h2>Executive answer</h2>
+
+<p>Your data-analysis idea <strong>can be effective enough for the Oxford Saïd Global Climate Tech Challenge</strong>, but only if you avoid a generic “climate dashboard.” The strongest approach is to turn weather, satellite, exposure, vulnerability and infrastructure data into <strong>actionable risk decisions</strong>: who is exposed, where, when, and what intervention reduces harm fastest.</p>
+
+<p>The challenge theme explicitly asks about prediction, preparation, adaptation, faster recovery, data, sensors and new materials for resilience. That is a good fit for a project that combines <strong>extreme-weather analytics + community decision support + deployable interventions</strong>. The official challenge page frames extreme weather around storms, floods, droughts, forest fires and heatwaves, and asks how communities can predict, prepare, adapt and recover faster. <sup class="cite">[<a href="https://www.sbs.ox.ac.uk/climate-change-challenge/oxford-said-global-climate-tech-challenge-2026?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Oxford Saïd Global Climate Tech Challenge 2026">SBS</a>]</sup></p>
+
+<p>My strongest recommendation: build a <strong>multi-hazard local resilience tool</strong>, but prototype it on <strong>one hazard and one geography</strong> first. For example: “heatwave risk for schools and clinics,” “flood exposure for vulnerable neighborhoods,” or “wildfire early-risk plus sensor-placement optimizer.”</p>
+
+<hr>
+
+<h1>1. Background: why this topic matters</h1>
+
+<p>The scientific basis is strong. The IPCC AR6 states that human-induced climate change is already affecting weather and climate extremes in every region, with stronger evidence since AR5 for changes in heatwaves, heavy precipitation, droughts and tropical cyclones. <sup class="cite">[<a href="https://www.ipcc.ch/report/ar6/wg1/resources/spm-headline-statements/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="WGI Summary for Policymakers Headline Statements">IPCC</a>]</sup> The IPCC’s extreme-events chapter assesses temperature extremes, heavy precipitation, river floods, droughts, storms, tropical cyclones, and compound events, which means your theme is not a marginal topic. It sits directly inside mainstream climate-risk science. <sup class="cite">[<a href="https://www.ipcc.ch/report/ar6/wg1/chapter/chapter-11/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Chapter 11: Weather and Climate Extreme Events in a ...">IPCC</a>]</sup></p>
+
+<p>The practical need is also clear. WMO’s State of the Global Climate 2024 reports that 2024 was the warmest year in the 175-year observational record and that extreme weather caused major economic and social disruption. <sup class="cite">[<a href="https://wmo.int/publication-series/state-of-global-climate/state-of-global-climate-2024?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="State of the Global Climate 2024">World Meteorological Organization</a>]</sup> Heat is especially important: WHO reports that studies for 2000-2019 estimate about <strong>489,000 heat-related deaths per year</strong>, with 45% in Asia and 36% in Europe. <sup class="cite">[<a href="https://www.who.int/news-room/fact-sheets/detail/climate-change-heat-and-health?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Heat and health">World Health Organization</a>]</sup></p>
+
+<p>The “prevention” side is where your project can score. UNDRR says early warning and anticipatory action are among the most proven and cost-effective disaster-risk-reduction measures. <sup class="cite">[<a href="https://www.undrr.org/implementing-sendai-framework/sendai-framework-action/early-warnings-for-all?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Early warnings for all (EW4All)">UNDRR</a>]</sup> WMO cites analysis from the Global Commission on Adaptation suggesting that every US\(1 invested in early-warning systems can produce about US\)9 in net economic benefits. <sup class="cite">[<a href="https://wmo.int/media/magazine-article/triple-dividends-of-early-warning-systems-and-climate-services?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="The Triple Dividends of Early Warning Systems and ...">World Meteorological Organization</a>]</sup> A World Bank paper estimated benefit-cost ratios for hydrometeorological early-warning investments between <strong>4 and 36</strong>. <sup class="cite">[<a href="https://openknowledge.worldbank.org/bitstreams/f9fc0526-63bf-5ac0-b690-2b818ebab967/download?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Policy Research Working Paper 6058">Open Knowledge Repository</a>]</sup></p>
+
+<p>The gap remains large. In 2024, 108 countries reported some multi-hazard early-warning-system capacity, which was 55% of countries and more than double the number in 2015. <sup class="cite">[<a href="https://www.undrr.org/reports/global-status-MHEWS-2024?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global status of multi-hazard early warning systems 2024">UNDRR</a>]</sup> By 2025, WMO/UNDRR reported 119 countries, or 60% of all countries, with a multi-hazard early warning system, but coverage gaps remained, especially in small island developing states. <sup class="cite">[<a href="https://wmo.int/resources/publication-series/global-status-of-multi-hazard-early-warning-systems/global-status-of-multi-hazard-early-warning-systems-2025?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Status of Multi-Hazard Early Warning Systems 2025">World Meteorological Organization</a>]</sup></p>
+
+<hr>
+
+<h1>2. Core scientific mechanism</h1>
+
+<p>Extreme-weather risk is not just “bad weather.” In disaster-risk science, the useful model is:</p>
+
+<blockquote><p><strong>Risk = Hazard × Exposure × Vulnerability ÷ Coping capacity</strong></p></blockquote>
+
+<p>For your project, that means:</p>
+
+<table><thead><tr><th>Component</th><th>Meaning</th><th>Example</th></tr></thead><tbody><tr><td><strong>Hazard</strong></td><td>The physical event</td><td>Heatwave, flood, drought, storm, wildfire</td></tr><tr><td><strong>Exposure</strong></td><td>People/assets in the hazard zone</td><td>Population, schools, hospitals, roads, farms</td></tr><tr><td><strong>Vulnerability</strong></td><td>Why some people/assets suffer more</td><td>Age, poverty, housing quality, disability, lack of cooling, weak drainage</td></tr><tr><td><strong>Coping capacity</strong></td><td>Ability to prepare/respond/recover</td><td>Shelters, emergency services, warnings, evacuation routes, insurance, water storage</td></tr></tbody></table>
+
+<p>This is why simple prediction is weaker than <strong>impact-based prediction</strong>. A 42°C day in a wealthy, shaded, air-conditioned neighborhood is dangerous. The same 42°C day in an informal settlement with metal roofs, elderly residents, no trees and limited water can be deadly.</p>
+
+<p>Your project should therefore predict <strong>impact</strong>, not only weather.</p>
+
+<hr>
+
+<h1>3. How effective will your data analysis be?</h1>
+
+<h2>My assessment: effective, if you choose the right task</h2>
+
+<p>Data analysis is <strong>very effective</strong> for:</p>
+
+<ol><li><strong>Identifying hotspots</strong><ul><li>Which neighborhoods repeatedly flood?</li><li>Which schools experience the worst heat exposure?</li><li>Which roads become unusable after heavy rainfall?</li><li>Which farms show early drought stress?</li></ul></li></ol>
+
+<ol><li><strong>Combining hazard and vulnerability</strong><ul><li>Heat + elderly population + poor housing</li><li>Flood + low elevation + poor drainage + dense population</li><li>Wildfire + dry vegetation + wind + road access difficulty</li></ul></li></ol>
+
+<ol><li><strong>Early warning and prioritization</strong><ul><li>Which communities should receive alerts first?</li><li>Where should emergency water, cooling centers or pumps be placed?</li><li>Which road repairs restore access to the most people?</li></ul></li></ol>
+
+<ol><li><strong>Evaluating adaptation measures</strong><ul><li>Where would cool roofs reduce heat exposure most?</li><li>Where would permeable pavement reduce runoff most?</li><li>Where should low-cost flood sensors be installed?</li><li>Which firebreaks or vegetation-management zones protect the most buildings?</li></ul></li></ol>
+
+<p>Data analysis is <strong>less effective</strong> for:</p>
+
+<ol><li><strong>Inventing better global weather forecasts from scratch</strong><ul><li>National meteorological agencies and ECMWF-style systems already use physics-based numerical weather prediction and massive data assimilation.</li><li>A student challenge project is unlikely to beat them at raw storm-track prediction.</li></ul></li></ol>
+
+<ol><li><strong>Predicting exact disaster losses without local data</strong><ul><li>Damage depends on building quality, insurance, emergency behavior, local drainage and governance.</li><li>Many places have weak loss records.</li></ul></li></ol>
+
+<ol><li><strong>Rare-event machine learning</strong><ul><li>Extreme events are rare, imbalanced and non-stationary.</li><li>Climate change shifts the probability distribution, so past events are not a perfect training set.</li></ul></li></ol>
+
+<p><strong>Best strategy:</strong> do not claim “we predict disasters perfectly.” Claim: “We transform public climate, satellite and community data into earlier, fairer, more actionable preparedness decisions.”</p>
+
+<p>That is credible.</p>
+
+<hr>
+
+<h1>4. Strong project directions for the challenge</h1>
+
+<h2>Option A: Heatwave Resilience Tool for schools, clinics and vulnerable neighborhoods</h2>
+
+<p>This is probably the <strong>highest-feasibility</strong> direction.</p>
+
+<h3>What it does</h3>
+
+<p>A platform that identifies urban heat-risk hotspots and recommends adaptation actions:</p>
+
+<ul><li>cool roofs</li><li>shade trees</li><li>reflective pavements</li><li>water points</li><li>cooling centers</li><li>school schedule changes</li><li>SMS warnings for high-risk residents</li></ul>
+
+<h3>Why it is strong</h3>
+
+<p>Heat data is accessible, health impact is serious, and interventions are understandable. WHO’s heat-health data gives you a strong public-health justification. <sup class="cite">[<a href="https://www.who.int/news-room/fact-sheets/detail/climate-change-heat-and-health?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Heat and health">World Health Organization</a>]</sup> ERA5-HEAT provides historical thermal comfort indices derived from ERA5, including indicators for outdoor human thermal stress. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/derived-utci-historical?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Thermal comfort indices derived from ERA5 reanalysis">Climate Data Store</a>]</sup> Landsat 8 Level 2 provides land surface temperature and surface reflectance, useful for mapping urban heat islands. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="USGS Landsat 8 Level 2, Collection 2, Tier 1">Google for Developers</a>]</sup></p>
+
+<h3>Interesting dependencies to analyze</h3>
+
+<table><thead><tr><th>Dependent variable</th><th>Possible predictors</th></tr></thead><tbody><tr><td>Heat-risk score</td><td>UTCI, daily max temperature, night temperature, humidity</td></tr><tr><td>Urban heat island intensity</td><td>land surface temperature, NDVI, tree cover, impervious surface</td></tr><tr><td>Vulnerable exposure</td><td>age, population density, schools, hospitals, informal settlements</td></tr><tr><td>Adaptation priority</td><td>heat intensity × vulnerable population × low shade × critical facility density</td></tr></tbody></table>
+
+<h3>Strong finding you can test</h3>
+
+<p>“Neighborhoods with low vegetation, high impervious surface, dense population and high social vulnerability experience disproportionate heat risk, and targeted cool-roof deployment can reduce exposure more efficiently than random deployment.”</p>
+
+<p>Cool roofs are a credible material intervention. The U.S. EPA states that cool roofs reduce heat transfer into buildings and can reduce peak cooling demand in air-conditioned residential buildings by 11-27%. <sup class="cite">[<a href="https://www.epa.gov/heatislands/using-cool-roofs-reduce-heat-islands?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Using Cool Roofs to Reduce Heat Islands">US EPA</a>]</sup> Lawrence Berkeley National Laboratory explains that high solar reflectance and high thermal emittance are the core physical properties that make a roof stay cooler. <sup class="cite">[<a href="https://heatisland.lbl.gov/coolscience/cool-roofs?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Cool Roofs | Heat Island Group">Heat Island Group</a>]</sup></p>
+
+<hr>
+
+<h2>Option B: Flood Impact Early Warning and Evacuation Prioritizer</h2>
+
+<p>This is a strong option if you want something visually powerful.</p>
+
+<h3>What it does</h3>
+
+<p>A tool that predicts which roads, schools, clinics and neighborhoods are likely to be affected by floods in the next few days, then ranks response actions:</p>
+
+<ul><li>send alerts</li><li>pre-position pumps</li><li>open shelters</li><li>reroute ambulances</li><li>protect water-treatment plants</li><li>move livestock or food stocks</li></ul>
+
+<h3>Why it is strong</h3>
+
+<p>Floods have good public datasets. The Global Flood Database maps the extent and timing of 913 flood events from 2000-2018. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/GLOBAL_FLOOD_DB_MODIS_EVENTS_V1?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Flood Database v1 (2000-2018)">Google for Developers</a>]</sup> Copernicus GloFAS is designed to support preparatory measures and emergency response for floods. <sup class="cite">[<a href="https://global-flood.emergency.copernicus.eu/react/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Flood Awareness System: Home | Copernicus EMS">CEMS-Floods React</a>]</sup> GloFAS historical river-discharge datasets are part of Copernicus Emergency Management Service operational flood forecasting. <sup class="cite">[<a href="https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=overview&utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="River discharge and related historical data from the Global ...">CEMS Early Warning Data Store</a>]</sup></p>
+
+<h3>Interesting dependencies to analyze</h3>
+
+<table><thead><tr><th>Dependent variable</th><th>Possible predictors</th></tr></thead><tbody><tr><td>Flood occurrence</td><td>rainfall anomaly, river discharge, antecedent soil moisture</td></tr><tr><td>Flood extent</td><td>slope, elevation, distance to river, land cover, drainage density</td></tr><tr><td>Human exposure</td><td>population density, roads, hospitals, schools</td></tr><tr><td>Recovery delay</td><td>road network disruption, bridge exposure, distance to emergency facilities</td></tr></tbody></table>
+
+<h3>Strong finding you can test</h3>
+
+<p>“Rainfall alone is a weak predictor of flood impact. Adding antecedent soil moisture, elevation, land cover, river proximity and exposure layers gives a more actionable flood-risk map.”</p>
+
+<p>NASA SMAP soil-moisture data is relevant because soil conditions before a storm can improve flood predictions. NASA notes that SMAP soil-moisture data have shown ability to improve flood predictions by providing soil conditions before major storms. <sup class="cite">[<a href="https://smap.jpl.nasa.gov/mission/why-it-matters/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Why It Matters | Mission – SMAP">SMAP</a>]</sup></p>
+
+<hr>
+
+<h2>Option C: Wildfire Risk, Detection and Sensor Placement Optimizer</h2>
+
+<p>This is good if you want to involve sensors.</p>
+
+<h3>What it does</h3>
+
+<p>A system that uses satellite fire detections, vegetation dryness, wind and human exposure to decide:</p>
+
+<ul><li>where wildfire risk is rising</li><li>where smoke exposure may affect settlements</li><li>where low-cost sensors should be placed</li><li>which roads are critical for evacuation</li><li>where fire-resistant materials or defensible-space interventions should be prioritized</li></ul>
+
+<h3>Why it is strong</h3>
+
+<p>NASA FIRMS provides near-real-time global active fire and hotspot data from MODIS and VIIRS. Global data are available within about 3 hours of satellite observation; U.S. and Canada detections can be real-time. <sup class="cite">[<a href="https://firms.modaps.eosdis.nasa.gov/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="NASA | LANCE | FIRMS">NASA FIRMS</a>]</sup> The MODIS MCD64A1 burned-area product provides monthly global burned-area information at 500 m resolution. <sup class="cite">[<a href="https://www.earthdata.nasa.gov/data/catalog/lpcloud-mcd64a1-006?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="MODIS/Terra+Aqua Direct Broadcast Burned Area Monthly ...">NASA Earthdata</a>]</sup> The Global Wildfire Information System provides fire-danger forecasts up to 10 days in advance and near-real-time information on active fires. <sup class="cite">[<a href="https://gwis.jrc.ec.europa.eu/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Wildfire Information System - European Union">gwis.jrc.ec.europa.eu</a>]</sup></p>
+
+<h3>Interesting dependencies to analyze</h3>
+
+<table><thead><tr><th>Dependent variable</th><th>Possible predictors</th></tr></thead><tbody><tr><td>Fire ignition probability</td><td>temperature, wind, humidity, lightning, human activity, road proximity</td></tr><tr><td>Fire spread risk</td><td>wind, slope, fuel load, vegetation dryness</td></tr><tr><td>Smoke exposure</td><td>fire radiative power, wind direction, settlement location</td></tr><tr><td>Preparedness priority</td><td>risk × population × road access × emergency-service distance</td></tr></tbody></table>
+
+<h3>Strong finding you can test</h3>
+
+<p>“Wildfire risk becomes more actionable when satellite fire detections are combined with fire-weather indices, vegetation condition, wind and settlement exposure.”</p>
+
+<hr>
+
+<h2>Option D: Drought Early Warning for agriculture and water security</h2>
+
+<p>This is excellent if you want a slower-onset, high-social-impact challenge.</p>
+
+<h3>What it does</h3>
+
+<p>A drought-monitoring and action-trigger tool that recommends:</p>
+
+<ul><li>irrigation priority zones</li><li>crop-risk alerts</li><li>water-rationing triggers</li><li>livestock-support planning</li><li>parametric insurance triggers</li><li>food-security warning</li></ul>
+
+<h3>Why it is strong</h3>
+
+<p>Drought is not sudden, so data analytics has more lead time. CHIRPS is a quasi-global rainfall dataset from 1981 to near-present, designed for trend analysis and seasonal drought monitoring. <sup class="cite">[<a href="https://www.chc.ucsb.edu/data/chirps?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="CHIRPS: Rainfall Estimates from Rain Gauge and Satellite ...">Climate Hazards Center</a>]</sup> SPEI is a multiscalar drought index used to determine onset, duration and magnitude of drought conditions. <sup class="cite">[<a href="https://spei.csic.es/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Index: SPEI, The Standardised Precipitation ...">SPEI</a>]</sup> The SPEIbase global drought database provides monthly global drought conditions at 0.5° resolution from 1901 onward. <sup class="cite">[<a href="https://spei.csic.es/database.html?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Data base: SPEI, The Standardised Precipitation- ...">SPEI</a>]</sup> GRACE and GRACE-FO data can track terrestrial water storage anomalies from 2002 to present, with applications in assessing drought and flood magnitude and frequency. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/satellite-terrestrial-water-storage?tab=overview&utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Terrestrial water storage anomaly data from 2002 to present ...">Climate Data Store</a>]</sup></p>
+
+<h3>Interesting dependencies to analyze</h3>
+
+<table><thead><tr><th>Dependent variable</th><th>Possible predictors</th></tr></thead><tbody><tr><td>Drought severity</td><td>rainfall deficit, SPEI, soil moisture, evapotranspiration</td></tr><tr><td>Crop stress</td><td>NDVI anomaly, rainfall anomaly, soil moisture</td></tr><tr><td>Water-storage stress</td><td>GRACE terrestrial water storage, reservoir levels if available</td></tr><tr><td>Food-security risk</td><td>crop stress × population × market access × poverty</td></tr></tbody></table>
+
+<h3>Strong finding you can test</h3>
+
+<p>“Drought impact appears earlier in rainfall and soil-moisture anomalies, then later in vegetation stress, groundwater decline and food-price signals.”</p>
+
+<hr>
+
+<h2>Option E: Post-disaster recovery prioritization tool</h2>
+
+<p>This is a less common but strong idea.</p>
+
+<h3>What it does</h3>
+
+<p>After a flood, storm or wildfire, it ranks where to send recovery resources first:</p>
+
+<ul><li>blocked roads</li><li>damaged bridges</li><li>isolated villages</li><li>damaged clinics</li><li>damaged schools</li><li>electricity or water-system disruption</li></ul>
+
+<h3>Why it is strong</h3>
+
+<p>Many projects focus on prediction. Fewer focus on <strong>recovery speed</strong>, which the challenge explicitly mentions. You can use satellite imagery, OpenStreetMap roads, WorldPop population and critical-facility data to estimate which repairs restore access to the most people.</p>
+
+<p>WorldPop develops open, high-resolution spatial demographic data. <sup class="cite">[<a href="https://www.worldpop.org/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="WorldPop: Open Spatial Demographic Data and Research">WorldPop</a>]</sup> NASA’s Gridded Population of the World models global population count and density on a continuous raster surface. <sup class="cite">[<a href="https://www.earthdata.nasa.gov/data/projects/gpw?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Gridded Population of the World">NASA Earthdata</a>]</sup> The Humanitarian Data Exchange provides crisis and humanitarian datasets for response and decision-making. <sup class="cite">[<a href="https://data.humdata.org/dataset?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Humanitarian Datasets | Find Crisis Data | HDX">Humanitarian Data Exchange</a>]</sup> Humanitarian OpenStreetMap states that open map data supports disaster management, risk reduction and SDG-related work. <sup class="cite">[<a href="https://www.hotosm.org/en/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Humanitarian OpenStreetMap">hotosm.org</a>]</sup></p>
+
+<hr>
+
+<h1>5. The best “winning” concept</h1>
+
+<h2>Recommended concept: <strong>ResilienceOS: impact-based early warning and adaptation planner</strong></h2>
+
+<h3>One-sentence pitch</h3>
+
+<p>“ResilienceOS combines climate forecasts, satellite data, population vulnerability and infrastructure maps to tell communities not only what hazard is coming, but who is at risk, what assets are exposed, and which action gives the highest resilience return.”</p>
+
+<h3>Why this is better than a simple dashboard</h3>
+
+<p>A dashboard says: “Flood risk is high.”</p>
+
+<p>Your tool says:</p>
+
+<blockquote><p>“In the next 72 hours, these 4 neighborhoods are most exposed. Two clinics and 12 schools are in likely flood zones. Road A is the critical evacuation bottleneck. Place pumps here, open shelter B, send SMS alerts to these zones, and pre-position medicine at clinic C.”</p></blockquote>
+
+<p>That is much closer to a real climate-tech solution.</p>
+
+<h3>MVP version</h3>
+
+<p>Pick <strong>one city or district</strong> and <strong>one hazard</strong>.</p>
+
+<p>Best MVP choices:</p>
+
+<ol><li><strong>Heatwave risk for schools and clinics</strong></li><li><strong>Flood risk for vulnerable neighborhoods</strong></li><li><strong>Wildfire risk and sensor placement</strong></li><li><strong>Drought risk for farms and water systems</strong></li></ol>
+
+<p>For the Oxford challenge, I would choose either:</p>
+
+<table><thead><tr><th>Rank</th><th>Topic</th><th>Why</th></tr></thead><tbody><tr><td>1</td><td><strong>Heatwave resilience for schools/clinics</strong></td><td>Strong health story, easy data, clear interventions, strong material link through cool roofs</td></tr><tr><td>2</td><td><strong>Flood early warning + evacuation prioritization</strong></td><td>Strong visual maps, high disaster relevance, clear emergency-response value</td></tr><tr><td>3</td><td><strong>Drought/agriculture early warning</strong></td><td>Strong for food security and water scarcity, but slower and less visually dramatic</td></tr><tr><td>4</td><td><strong>Wildfire sensor-placement optimizer</strong></td><td>Good technology angle, but more complex if your region lacks wildfire data</td></tr></tbody></table>
+
+<hr>
+
+<h1>6. Big real datasets you can use</h1>
+
+<h2>Foundation climate and weather datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Best for</th><th>Coverage / detail</th><th>Why useful</th></tr></thead><tbody><tr><td><strong>ERA5</strong></td><td>temperature, wind, rainfall, humidity, pressure</td><td>Global hourly reanalysis from 1940 onward</td><td>Core climate/weather backbone for nearly any hazard model. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="ERA5 hourly data on single levels from 1940 to present">Climate Data Store</a>]</sup></td></tr><tr><td><strong>ERA5-Land</strong></td><td>soil moisture, runoff, land variables</td><td>Global land reanalysis from 1950 onward</td><td>Better for land-surface hazard models such as drought, flood and heat. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="ERA5-Land hourly data from 1950 to present">Climate Data Store</a>]</sup></td></tr><tr><td><strong>ERA5-HEAT / UTCI</strong></td><td>heat stress</td><td>Historical thermal comfort indices</td><td>Directly relevant for human heat-health risk. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/derived-utci-historical?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Thermal comfort indices derived from ERA5 reanalysis">Climate Data Store</a>]</sup></td></tr><tr><td><strong>CHIRPS</strong></td><td>rainfall, drought, flood precursors</td><td>50°S-50°N, 1981 to near-present, 0.05° rainfall</td><td>Excellent for drought and rainfall anomaly analysis. <sup class="cite">[<a href="https://www.chc.ucsb.edu/data/chirps?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="CHIRPS: Rainfall Estimates from Rain Gauge and Satellite ...">Climate Hazards Center</a>]</sup></td></tr><tr><td><strong>SMAP</strong></td><td>soil moisture</td><td>Global satellite soil moisture</td><td>Useful for drought monitoring and flood susceptibility. <sup class="cite">[<a href="https://smap.jpl.nasa.gov/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="NASA's SMAP">SMAP</a>]</sup></td></tr><tr><td><strong>GRACE / GRACE-FO</strong></td><td>groundwater and total water storage</td><td>2002-present</td><td>Useful for drought, groundwater stress and hydrological extremes. <sup class="cite">[<a href="https://nasagrace.unl.edu/About.aspx?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="About the Product - NASA Grace">nasagrace.unl.edu</a>]</sup></td></tr></tbody></table>
+
+<h2>Flood datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Best for</th><th>Notes</th></tr></thead><tbody><tr><td><strong>Global Flood Database</strong></td><td>historical flood extent labels</td><td>913 flood events from 2000-2018. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/GLOBAL_FLOOD_DB_MODIS_EVENTS_V1?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Flood Database v1 (2000-2018)">Google for Developers</a>]</sup></td></tr><tr><td><strong>GloFAS</strong></td><td>river flood monitoring and forecasting</td><td>Designed to support preparedness and emergency response. <sup class="cite">[<a href="https://global-flood.emergency.copernicus.eu/react/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Flood Awareness System: Home | Copernicus EMS">CEMS-Floods React</a>]</sup></td></tr><tr><td><strong>GloFAS historical river discharge</strong></td><td>model training and validation</td><td>Part of Copernicus Emergency Management Service. <sup class="cite">[<a href="https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=overview&utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="River discharge and related historical data from the Global ...">CEMS Early Warning Data Store</a>]</sup></td></tr><tr><td><strong>NASA Near-Real-Time Global Flood Products</strong></td><td>current flood monitoring</td><td>MODIS/VIIRS products; recent updates include recurring flood classification. <sup class="cite">[<a href="https://www.earthdata.nasa.gov/data/instruments/viirs/near-real-time-data/nrt-global-flood-products?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="NRT Global Flood Products">NASA Earthdata</a>]</sup></td></tr><tr><td><strong>Dartmouth Flood Observatory / HDX</strong></td><td>historical large flood events</td><td>Thousands of global flood records, useful for event catalogs. <sup class="cite">[<a href="https://data.humdata.org/dataset/global-active-archive-of-large-flood-events-dfo?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Active Archive of Large Flood Events (DFO)">Humanitarian Data Exchange</a>]</sup></td></tr></tbody></table>
+
+<h2>Storm and cyclone datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Best for</th><th>Notes</th></tr></thead><tbody><tr><td><strong>IBTrACS</strong></td><td>tropical cyclone tracks and intensity</td><td>NOAA’s global best-track tropical cyclone archive, merging agency datasets. <sup class="cite">[<a href="https://www.ncei.noaa.gov/products/international-best-track-archive?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="International Best Track Archive for Climate Stewardship ...">NCEI</a>]</sup></td></tr><tr><td><strong>NOAA Storm Events Database</strong></td><td>U.S. storm, flood, tornado, heat, drought impacts</td><td>Official NOAA storm-event records from 1950 to February 2026, with CSV bulk downloads. <sup class="cite">[<a href="https://www.ncei.noaa.gov/stormevents/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Storm Events Database">NCEI</a>]</sup></td></tr><tr><td><strong>EM-DAT</strong></td><td>global disaster occurrence and impacts</td><td>Over 27,000 mass disasters from 1900 to present, open for non-commercial use. <sup class="cite">[<a href="https://www.emdat.be/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="EM-DAT - The international disaster database">EM-DAT</a>]</sup></td></tr></tbody></table>
+
+<h2>Wildfire datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Best for</th><th>Notes</th></tr></thead><tbody><tr><td><strong>NASA FIRMS</strong></td><td>near-real-time active fires</td><td>MODIS/VIIRS active fire detections; global data within about 3 hours. <sup class="cite">[<a href="https://firms.modaps.eosdis.nasa.gov/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="NASA | LANCE | FIRMS">NASA FIRMS</a>]</sup></td></tr><tr><td><strong>MODIS MCD64A1 Burned Area</strong></td><td>historical burned-area labels</td><td>Monthly global 500 m burned-area data. <sup class="cite">[<a href="https://www.earthdata.nasa.gov/data/catalog/lpcloud-mcd64a1-006?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="MODIS/Terra+Aqua Direct Broadcast Burned Area Monthly ...">NASA Earthdata</a>]</sup></td></tr><tr><td><strong>GWIS</strong></td><td>global fire danger, active fire, impacts</td><td>Fire danger forecast up to 10 days and near-real-time fire information. <sup class="cite">[<a href="https://gwis.jrc.ec.europa.eu/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Wildfire Information System - European Union">gwis.jrc.ec.europa.eu</a>]</sup></td></tr><tr><td><strong>EFFIS</strong></td><td>European wildfire records and monitoring</td><td>Supports European forest-fire protection services and provides wildfire information. <sup class="cite">[<a href="https://effis.emergency.copernicus.eu/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="European Forest Fire Information System - Copernicus">EFFIS</a>]</sup></td></tr><tr><td><strong>Copernicus Fire Danger Indices</strong></td><td>fire-weather risk modeling</td><td>Historical fire-danger indices calculated using ECMWF ERA5 reanalysis. <sup class="cite">[<a href="https://ewds.climate.copernicus.eu/datasets/cems-fire-historical-v1?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Fire danger indices historical data from the Copernicus ...">CEMS Early Warning Data Store</a>]</sup></td></tr></tbody></table>
+
+<h2>Heatwave and urban heat datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Best for</th><th>Notes</th></tr></thead><tbody><tr><td><strong>ERA5-HEAT / UTCI</strong></td><td>human thermal stress</td><td>State-of-the-art bioclimatology dataset derived from ERA5. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/derived-utci-historical?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Thermal comfort indices derived from ERA5 reanalysis">Climate Data Store</a>]</sup></td></tr><tr><td><strong>Landsat 8 Level 2</strong></td><td>urban heat island mapping</td><td>Includes surface reflectance and land surface temperature. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="USGS Landsat 8 Level 2, Collection 2, Tier 1">Google for Developers</a>]</sup></td></tr><tr><td><strong>ECOSTRESS</strong></td><td>urban heat, thermal remote sensing</td><td>NASA training materials use ECOSTRESS for urban heat island mapping. <sup class="cite">[<a href="https://www.earthdata.nasa.gov/learn/trainings/introduction-thermal-remote-sensing-applications-urban-heat-island-mapping?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Introduction to Thermal Remote Sensing and Applications ...">NASA Earthdata</a>]</sup></td></tr><tr><td><strong>WHO heat-health data</strong></td><td>public-health framing</td><td>WHO summarizes heat-health impacts and mortality estimates. <sup class="cite">[<a href="https://www.who.int/news-room/fact-sheets/detail/climate-change-heat-and-health?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Heat and health">World Health Organization</a>]</sup></td></tr></tbody></table>
+
+<h2>Exposure and vulnerability datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Best for</th><th>Notes</th></tr></thead><tbody><tr><td><strong>WorldPop</strong></td><td>high-resolution population exposure</td><td>Open, peer-reviewed spatial demographic data. <sup class="cite">[<a href="https://www.worldpop.org/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="WorldPop: Open Spatial Demographic Data and Research">WorldPop</a>]</sup></td></tr><tr><td><strong>NASA GPWv4</strong></td><td>global population count/density</td><td>Census-based gridded population data. <sup class="cite">[<a href="https://www.earthdata.nasa.gov/data/projects/gpw?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Gridded Population of the World">NASA Earthdata</a>]</sup></td></tr><tr><td><strong>Humanitarian Data Exchange</strong></td><td>admin boundaries, health facilities, crisis data</td><td>Curated humanitarian datasets for crisis response. <sup class="cite">[<a href="https://data.humdata.org/dataset?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Humanitarian Datasets | Find Crisis Data | HDX">Humanitarian Data Exchange</a>]</sup></td></tr><tr><td><strong>OpenStreetMap / HOTOSM</strong></td><td>roads, buildings, clinics, schools, evacuation routes</td><td>Open mapping used in disaster-risk and humanitarian work. <sup class="cite">[<a href="https://www.hotosm.org/en/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Humanitarian OpenStreetMap">hotosm.org</a>]</sup></td></tr><tr><td><strong>INFORM Risk Index</strong></td><td>country disaster risk and coping capacity</td><td>Combines hazards/exposure, vulnerability and lack of coping capacity. <sup class="cite">[<a href="https://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Results-and-data?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="INFORM Risk - Results and data - DRMKC - European Union">European Commission</a>]</sup></td></tr><tr><td><strong>ND-GAIN</strong></td><td>climate vulnerability and readiness</td><td>Assesses where needs and opportunities for resilience are greatest. <sup class="cite">[<a href="https://gain.nd.edu/our-work/country-index/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Country Index - Notre Dame Global Adaptation Initiative">Notre Dame Global Adaptation Initiative</a>]</sup></td></tr><tr><td><strong>CDC/ATSDR SVI</strong></td><td>U.S. social vulnerability</td><td>Helps communities prepare for and recover from emergencies. <sup class="cite">[<a href="https://www.atsdr.cdc.gov/place-health/php/svi/index.html?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Social Vulnerability Index | Place and Health">ATSDR</a>]</sup></td></tr></tbody></table>
+
+<hr>
+
+<h1>7. Interesting dependencies and findings to test</h1>
+
+<h2>Floods</h2>
+
+<h3>Hypothesis</h3>
+
+<p>Flood impact is better predicted by <strong>rainfall + antecedent soil moisture + topography + land cover + exposure</strong>, not rainfall alone.</p>
+
+<h3>Variables</h3>
+
+<table><thead><tr><th>Type</th><th>Variables</th></tr></thead><tbody><tr><td>Hazard</td><td>rainfall intensity, accumulated rainfall, river discharge</td></tr><tr><td>Physical modifiers</td><td>elevation, slope, distance to river, drainage density, soil moisture</td></tr><tr><td>Human exposure</td><td>population, buildings, roads, schools, clinics</td></tr><tr><td>Vulnerability</td><td>poverty, informal housing, elderly population, lack of vehicle access</td></tr><tr><td>Outcome</td><td>flood extent, people exposed, roads cut, facilities affected</td></tr></tbody></table>
+
+<h3>Practical output</h3>
+
+<p>A “72-hour flood action map” showing where to send pumps, alerts, evacuation buses and emergency medical supplies.</p>
+
+<hr>
+
+<h2>Heatwaves</h2>
+
+<h3>Hypothesis</h3>
+
+<p>Heat-health risk depends more on <strong>nighttime heat, humidity, urban surface temperature, age and housing conditions</strong> than on maximum air temperature alone.</p>
+
+<h3>Variables</h3>
+
+<table><thead><tr><th>Type</th><th>Variables</th></tr></thead><tbody><tr><td>Hazard</td><td>daily max temperature, nighttime minimum temperature, UTCI, humidity</td></tr><tr><td>Urban form</td><td>land surface temperature, NDVI, impervious surface, roof type</td></tr><tr><td>Exposure</td><td>population density, schools, clinics, elderly population</td></tr><tr><td>Vulnerability</td><td>low-income areas, lack of cooling, metal roofs, low tree cover</td></tr><tr><td>Outcome</td><td>heat-risk index, expected heat exposure, cooling-priority zones</td></tr></tbody></table>
+
+<h3>Practical output</h3>
+
+<p>A “cooling intervention priority map” recommending cool roofs, shade, water points and cooling centers.</p>
+
+<hr>
+
+<h2>Wildfires</h2>
+
+<h3>Hypothesis</h3>
+
+<p>Wildfire danger is not only about heat. It rises when <strong>fuel dryness, wind, low humidity, vegetation, ignition sources and settlement exposure</strong> align.</p>
+
+<h3>Variables</h3>
+
+<table><thead><tr><th>Type</th><th>Variables</th></tr></thead><tbody><tr><td>Hazard</td><td>fire weather index, temperature, humidity, wind, lightning</td></tr><tr><td>Fuel</td><td>vegetation type, NDVI anomaly, drought index, fuel moisture proxy</td></tr><tr><td>Ignition</td><td>roads, settlements, agriculture, power lines if available</td></tr><tr><td>Exposure</td><td>homes, roads, schools, clinics, forests, farms</td></tr><tr><td>Outcome</td><td>active fire probability, burned-area risk, smoke-exposure risk</td></tr></tbody></table>
+
+<h3>Practical output</h3>
+
+<p>A wildfire risk map plus a sensor-placement plan showing where low-cost fire, smoke or weather sensors provide the largest early-warning value.</p>
+
+<hr>
+
+<h2>Droughts</h2>
+
+<h3>Hypothesis</h3>
+
+<p>Drought becomes visible first in rainfall anomalies, then soil moisture, then vegetation stress, then groundwater and economic impacts.</p>
+
+<h3>Variables</h3>
+
+<table><thead><tr><th>Stage</th><th>Signal</th></tr></thead><tbody><tr><td>Meteorological drought</td><td>CHIRPS rainfall anomaly, SPI/SPEI</td></tr><tr><td>Agricultural drought</td><td>SMAP soil moisture, NDVI anomaly</td></tr><tr><td>Hydrological drought</td><td>GRACE water-storage anomaly, streamflow</td></tr><tr><td>Socioeconomic drought</td><td>crop yield, food prices, water restrictions, migration if available</td></tr></tbody></table>
+
+<h3>Practical output</h3>
+
+<p>A drought-trigger system for farmers, water utilities or local government.</p>
+
+<hr>
+
+<h2>Storms and cyclones</h2>
+
+<h3>Hypothesis</h3>
+
+<p>For storms, the best student-level contribution is not raw storm-track prediction. It is <strong>impact forecasting</strong>: estimating which places will suffer most if a known storm track occurs.</p>
+
+<h3>Variables</h3>
+
+<table><thead><tr><th>Type</th><th>Variables</th></tr></thead><tbody><tr><td>Hazard</td><td>storm track, wind speed, pressure, rainfall, storm surge if coastal</td></tr><tr><td>Exposure</td><td>population, buildings, critical infrastructure</td></tr><tr><td>Vulnerability</td><td>housing type, elevation, drainage, road access, poverty</td></tr><tr><td>Outcome</td><td>likely affected population, damaged facilities, blocked routes</td></tr></tbody></table>
+
+<h3>Practical output</h3>
+
+<p>A cyclone-impact exposure map using IBTrACS historical storms plus current population and infrastructure layers.</p>
+
+<hr>
+
+<h1>8. Sensors: what role they can play</h1>
+
+<p>Sensors are valuable because satellite and reanalysis data often miss <strong>street-level reality</strong>.</p>
+
+<h2>Useful sensor ideas</h2>
+
+<table><thead><tr><th>Sensor</th><th>Hazard</th><th>Value</th></tr></thead><tbody><tr><td>Low-cost river-level sensor</td><td>Flood</td><td>Detects local water rise earlier than regional models</td></tr><tr><td>Rain gauge network</td><td>Flood/drought</td><td>Improves local rainfall accuracy</td></tr><tr><td>Soil-moisture sensor</td><td>Drought/flood</td><td>Shows crop stress and flood susceptibility</td></tr><tr><td>Temperature/humidity sensor</td><td>Heatwave</td><td>Captures neighborhood-level heat differences</td></tr><tr><td>PM2.5 sensor</td><td>Wildfire</td><td>Tracks smoke exposure</td></tr><tr><td>Wind sensor</td><td>Wildfire/storm</td><td>Helps estimate spread and damage risk</td></tr><tr><td>LoRaWAN communication node</td><td>Multi-hazard</td><td>Keeps sensors connected in low-power, low-internet environments</td></tr></tbody></table>
+
+<h2>Strong challenge angle</h2>
+
+<p>Do not just say “install sensors.” Create an algorithm that answers:</p>
+
+<blockquote><p>“Where should we place 20 sensors to protect the most people?”</p></blockquote>
+
+<p>That becomes a <strong>sensor-placement optimization problem</strong>. Inputs: hazard history, population, vulnerable facilities, road access, existing stations, communication coverage. Output: ranked sensor locations.</p>
+
+<p>This is more original than a simple warning app.</p>
+
+<hr>
+
+<h1>9. New materials: what role they can play</h1>
+
+<p>New materials make your project stronger because the challenge asks about data, sensors and materials.</p>
+
+<h2>Practical material interventions</h2>
+
+<table><thead><tr><th>Material/intervention</th><th>Hazard</th><th>Mechanism</th></tr></thead><tbody><tr><td>Cool roofs</td><td>Heatwave</td><td>Higher solar reflectance and thermal emittance reduce heat absorption</td></tr><tr><td>Reflective pavements</td><td>Heatwave</td><td>Lower surface temperature and urban heat storage</td></tr><tr><td>Permeable pavement</td><td>Flood</td><td>Increases infiltration, reduces runoff and peak flow</td></tr><tr><td>Green roofs / blue-green infrastructure</td><td>Heat/flood</td><td>Evapotranspiration, water retention, insulation</td></tr><tr><td>Fire-resistant cladding/coatings</td><td>Wildfire</td><td>Reduces ignition and heat transfer</td></tr><tr><td>Flood-resilient wall/floor materials</td><td>Flood</td><td>Faster drying, lower mold damage, faster recovery</td></tr><tr><td>Modular shade structures</td><td>Heatwave</td><td>Low-cost, fast deployment around schools/clinics/markets</td></tr><tr><td>Water-absorbing soil amendments</td><td>Drought/heat</td><td>Improves soil water retention, but must be tested locally</td></tr></tbody></table>
+
+<p>Permeable pavement is a solid flood-material topic. A 2025 integrative review says permeable pavements provide stormwater-management benefits by reducing surface runoff and increasing infiltration. <sup class="cite">[<a href="https://www.mdpi.com/2073-4441/17/22/3323?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Permeable Pavements: An Integrative Review of Technical ...">MDPI</a>]</sup> A Nature Index summary of research on permeable pavement systems reports evidence for reduced runoff volume and peak flow, while also noting that hydraulic performance can degrade without maintenance. <sup class="cite">[<a href="https://www.nature.com/nature-index/topics/l4/permeable-pavement-systems-for-stormwater-management?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Permeable Pavement Systems for Stormwater Management">Nature</a>]</sup></p>
+
+<p>A good project would not merely recommend materials. It would <strong>optimize where to deploy them</strong>.</p>
+
+<p>Example:</p>
+
+<blockquote><p>“For a budget of $100,000, which 50 roofs should be coated first to reduce heat exposure for the largest number of children, elderly residents and patients?”</p></blockquote>
+
+<p>That is a strong climate-tech framing.</p>
+
+<hr>
+
+<h1>10. What else you could do beyond data analysis</h1>
+
+<h2>1. Build an “action engine,” not only a prediction model</h2>
+
+<p>Most climate dashboards fail because they stop at maps. Your tool should produce <strong>ranked actions</strong>.</p>
+
+<p>Example actions:</p>
+
+<ul><li>open cooling centers</li><li>send SMS warnings</li><li>deploy water tanks</li><li>pre-position pumps</li><li>clean drainage channels</li><li>close schools temporarily</li><li>reroute ambulances</li><li>move livestock</li><li>activate volunteer teams</li><li>prioritize cool-roof retrofits</li></ul>
+
+<h2>2. Add fairness and vulnerability</h2>
+
+<p>Judges will likely care about equity. Add a fairness layer:</p>
+
+<ul><li>elderly residents</li><li>children</li><li>people with disabilities</li><li>low-income communities</li><li>informal settlements</li><li>remote villages</li><li>clinics and schools</li></ul>
+
+<p>Use WorldPop, GPW, OSM, HDX, INFORM or local census data where available. <sup class="cite">[<a href="https://www.worldpop.org/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="WorldPop: Open Spatial Demographic Data and Research">WorldPop</a>]</sup></p>
+
+<h2>3. Add “lead time”</h2>
+
+<p>A warning is valuable only if it gives enough time to act.</p>
+
+<p>Track:</p>
+
+<table><thead><tr><th>Hazard</th><th>Useful lead time</th></tr></thead><tbody><tr><td>Heatwave</td><td>3-10 days</td></tr><tr><td>River flood</td><td>2-10 days</td></tr><tr><td>Flash flood</td><td>minutes to hours</td></tr><tr><td>Wildfire ignition</td><td>hours to days for danger, minutes for detection</td></tr><tr><td>Drought</td><td>weeks to months</td></tr><tr><td>Storm/cyclone</td><td>2-7 days</td></tr></tbody></table>
+
+<h2>4. Add low-bandwidth communication</h2>
+
+<p>A real resilience tool must work when internet is weak.</p>
+
+<p>Potential features:</p>
+
+<ul><li>SMS alert templates</li><li>WhatsApp/Telegram bot</li><li>offline PDF risk maps</li><li>printable evacuation maps</li><li>color-coded warning levels</li><li>local-language messages</li><li>voice alerts for elderly or low-literacy users</li></ul>
+
+<h2>5. Add “before, during, after” workflow</h2>
+
+<table><thead><tr><th>Phase</th><th>Tool function</th></tr></thead><tbody><tr><td>Before event</td><td>hotspot mapping, sensor placement, material intervention planning</td></tr><tr><td>During event</td><td>warnings, exposed population, evacuation route ranking</td></tr><tr><td>After event</td><td>damage detection, blocked-road ranking, recovery priority map</td></tr></tbody></table>
+
+<h2>6. Add a simple financial model</h2>
+
+<p>Climate-tech judges like measurable impact.</p>
+
+<p>Estimate:</p>
+
+<ul><li>people protected</li><li>schools/clinics protected</li><li>avoided heat exposure hours</li><li>avoided road-disconnection hours</li><li>response-time reduction</li><li>estimated economic loss avoided</li><li>cost per person protected</li><li>benefit-cost ratio</li></ul>
+
+<p>Use early-warning evidence as background: WMO cites US\(9 benefit per US\)1 invested in EWS. <sup class="cite">[<a href="https://wmo.int/media/magazine-article/triple-dividends-of-early-warning-systems-and-climate-services?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="The Triple Dividends of Early Warning Systems and ...">World Meteorological Organization</a>]</sup></p>
+
+<hr>
+
+<h1>11. Best MVP blueprint</h1>
+
+<h2>MVP title</h2>
+
+<p><strong>HeatShield: Data-driven heatwave resilience for schools and clinics</strong></p>
+
+<h2>Why this is my top choice</h2>
+
+<p>It combines:</p>
+
+<ul><li>extreme weather prediction</li><li>vulnerable communities</li><li>satellite data</li><li>sensors</li><li>new materials</li><li>practical adaptation</li><li>measurable impact</li></ul>
+
+<h2>Core question</h2>
+
+<blockquote><p>“Which schools, clinics and neighborhoods should receive cooling interventions first before the next heatwave?”</p></blockquote>
+
+<h2>Data stack</h2>
+
+<table><thead><tr><th>Layer</th><th>Dataset</th></tr></thead><tbody><tr><td>Weather heat stress</td><td>ERA5-HEAT / UTCI</td></tr><tr><td>Surface heat</td><td>Landsat land surface temperature</td></tr><tr><td>Population exposure</td><td>WorldPop or GPW</td></tr><tr><td>Critical facilities</td><td>OSM / HDX schools and clinics</td></tr><tr><td>Vulnerability</td><td>local census, INFORM, ND-GAIN, CDC SVI if U.S.</td></tr><tr><td>Vegetation</td><td>Sentinel-2 NDVI or Landsat NDVI</td></tr><tr><td>Intervention</td><td>cool-roof suitability, shade potential, cooling-center distance</td></tr></tbody></table>
+
+<h2>Model</h2>
+
+<p>Create a <strong>Heat Risk Priority Score</strong>:</p>
+
+<blockquote><p>Heat Risk = heat intensity × vulnerable population × low vegetation × high surface temperature × critical facility weight × low cooling access</p></blockquote>
+
+<h2>Output</h2>
+
+<ol><li>Map of highest-risk zones  </li><li>Ranked list of schools/clinics needing intervention  </li><li>Recommended action:<ul><li>cool roof</li><li>shade structure</li><li>trees</li><li>cooling room</li><li>water access</li><li>heat-warning SMS</li></ul></li><li>Estimated impact:<ul><li>number of people protected</li><li>children/patients protected</li><li>reduction in heat exposure</li><li>cost per person protected</li></ul></li></ol>
+
+<h2>Optional sensor extension</h2>
+
+<p>Place 10-20 temperature/humidity sensors in predicted heat hotspots. Use them to validate the model and improve local accuracy.</p>
+
+<h2>Optional materials extension</h2>
+
+<p>Compare interventions:</p>
+
+<table><thead><tr><th>Intervention</th><th>Cost</th><th>Speed</th><th>Expected benefit</th></tr></thead><tbody><tr><td>Cool roof coating</td><td>Medium</td><td>Fast</td><td>Lower indoor heat</td></tr><tr><td>Shade canopy</td><td>Low-medium</td><td>Fast</td><td>Protects outdoor waiting areas</td></tr><tr><td>Trees</td><td>Medium</td><td>Slow</td><td>Long-term cooling and air quality</td></tr><tr><td>Reflective pavement</td><td>Medium-high</td><td>Medium</td><td>Surface cooling</td></tr><tr><td>Cooling room</td><td>High</td><td>Medium</td><td>Direct health protection</td></tr></tbody></table>
+
+<hr>
+
+<h1>12. Alternative MVP: FloodSafe</h1>
+
+<h2>MVP title</h2>
+
+<p><strong>FloodSafe: 72-hour flood exposure and evacuation prioritizer</strong></p>
+
+<h2>Core question</h2>
+
+<blockquote><p>“Which neighborhoods, roads and facilities are most at risk during the next flood, and what should local responders do first?”</p></blockquote>
+
+<h2>Data stack</h2>
+
+<table><thead><tr><th>Layer</th><th>Dataset</th></tr></thead><tbody><tr><td>Rainfall</td><td>CHIRPS, ERA5</td></tr><tr><td>River discharge</td><td>GloFAS</td></tr><tr><td>Flood labels</td><td>Global Flood Database</td></tr><tr><td>Soil moisture</td><td>SMAP, ERA5-Land</td></tr><tr><td>Elevation</td><td>SRTM / Copernicus DEM</td></tr><tr><td>Population</td><td>WorldPop / GPW</td></tr><tr><td>Roads/facilities</td><td>OSM / HDX</td></tr></tbody></table>
+
+<h2>Model output</h2>
+
+<ul><li>flood probability map</li><li>exposed population estimate</li><li>affected road segments</li><li>isolated community detection</li><li>evacuation route suggestions</li><li>shelter location ranking</li></ul>
+
+<p>This version may look more dramatic in a presentation because flood maps are visually intuitive.</p>
+
+<hr>
+
+<h1>13. How to evaluate your project</h1>
+
+<p>Use both technical and human metrics.</p>
+
+<h2>Technical metrics</h2>
+
+<table><thead><tr><th>Task</th><th>Metrics</th></tr></thead><tbody><tr><td>Classification</td><td>AUROC, PR-AUC, recall, precision</td></tr><tr><td>Forecasting</td><td>Brier score, calibration curve, lead-time accuracy</td></tr><tr><td>Hotspot ranking</td><td>top-k recall, hit rate in highest-risk zones</td></tr><tr><td>Spatial model</td><td>IoU for flood/fire extent, RMSE for temperature</td></tr><tr><td>Recovery routing</td><td>travel-time reduction, population reconnected</td></tr></tbody></table>
+
+<h2>Impact metrics</h2>
+
+<table><thead><tr><th>Impact question</th><th>Metric</th></tr></thead><tbody><tr><td>Who is protected?</td><td>people in high-risk zones reached</td></tr><tr><td>How fast?</td><td>lead time before event</td></tr><tr><td>How fair?</td><td>coverage of vulnerable groups</td></tr><tr><td>How practical?</td><td>cost per person protected</td></tr><tr><td>How scalable?</td><td>data availability across countries</td></tr><tr><td>How trusted?</td><td>explainability of risk score</td></tr></tbody></table>
+
+<h2>Presentation metric judges will understand</h2>
+
+<blockquote><p>“With the same budget, our tool protects X% more vulnerable people than random intervention placement.”</p></blockquote>
+
+<p>That is powerful.</p>
+
+<hr>
+
+<h1>14. Main risks and how to avoid them</h1>
+
+<table><thead><tr><th>Risk</th><th>Why it hurts</th><th>Fix</th></tr></thead><tbody><tr><td>Too broad: all hazards, all countries</td><td>Looks unfocused</td><td>Prototype one hazard, one city, one decision</td></tr><tr><td>Pure dashboard</td><td>Not actionable</td><td>Add ranked recommendations</td></tr><tr><td>Raw weather prediction claim</td><td>Not credible</td><td>Use existing forecasts, predict impact</td></tr><tr><td>No vulnerable-community layer</td><td>Weak social value</td><td>Add population, age, poverty, schools, clinics</td></tr><tr><td>No validation</td><td>Looks theoretical</td><td>Back-test on historical events</td></tr><tr><td>No cost logic</td><td>Hard to justify</td><td>Add cost per person protected</td></tr><tr><td>No local usability</td><td>Too academic</td><td>Add SMS/offline map/community workflow</td></tr></tbody></table>
+
+<hr>
+
+<h1>15. Recommended final project framing</h1>
+
+<p>Use this structure in your challenge submission:</p>
+
+<h2>Problem</h2>
+
+<p>Extreme weather warnings often describe the hazard but not the local impact. Communities need to know who is exposed, which assets are vulnerable, and which action should be taken first.</p>
+
+<h2>Solution</h2>
+
+<p>A data-driven resilience platform that combines climate forecasts, satellite observations, population exposure, social vulnerability and infrastructure data to produce actionable preparedness and recovery recommendations.</p>
+
+<h2>Innovation</h2>
+
+<p>The system moves from <strong>weather forecasting</strong> to <strong>impact-based decision support</strong>. It also links data analytics with sensors and material interventions such as cool roofs, permeable pavements or fire-resistant surfaces.</p>
+
+<h2>Prototype</h2>
+
+<p>Start with one hazard:</p>
+
+<ul><li>HeatShield for heatwaves, or</li><li>FloodSafe for floods.</li></ul>
+
+<h2>Evidence</h2>
+
+<p>Use IPCC climate-risk science, WMO early-warning evidence, WHO heat-health data, NASA/Copernicus/NOAA datasets, and open population/infrastructure data.</p>
+
+<h2>Impact</h2>
+
+<p>Measured by people protected, critical facilities prioritized, lead time gained, response time reduced, and cost per person protected.</p>
+
+<hr>
+
+<h1>16. My strongest recommendation</h1>
+
+<p>For the challenge, choose:</p>
+
+<h2><strong>HeatShield: AI-assisted heatwave resilience for schools and clinics</strong></h2>
+
+<p>Reason: it combines public-health urgency, clear data, strong visuals, vulnerable groups, sensors, and materials. You can show a before/after adaptation plan using cool roofs, shade and cooling centers. It is easier to validate than storm prediction and more directly human-centered than a generic climate-risk map.</p>
+
+<p>Second-best choice:</p>
+
+<h2><strong>FloodSafe: flood exposure and evacuation prioritizer</strong></h2>
+
+<p>Reason: it is visually strong, data-rich, and clearly useful for emergency response.</p>
+
+<p>The most competitive version would be:</p>
+
+<blockquote><p><strong>A decision-support tool that ranks where to act first, not just where risk exists.</strong></p></blockquote></div></div>
+    <div class="message user-message"><div class="content"><p>@Web search Thanks very much. Now I liked the idea of Resilience OS on Heatwave and urban heat. I want to start with Tajikistan, especially Khujand city. Are there any datasets and availability of data there and are there good places of heatwave analysis regarding the importance of heat problem?</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>I’ll focus on Khujand/Sughd as the pilot, checking heat-risk importance, available datasets, measurable versus proxy variables, and a concrete MVP path for ResilienceOS Heat.</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>Initial finding: Khujand looks promising as a hot lowland pilot, though the strongest evidence will likely come from satellite, reanalysis, and open-map data.</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>iturn357354image1</p>
+
+<h2>Bottom line</h2>
+
+<p>Yes. <strong>Khujand is a defensible and interesting pilot city for ResilienceOS Heatwave/Urban Heat.</strong> The data situation is good enough for a serious MVP, especially if you combine open satellite/climate datasets with a small local sensor campaign.</p>
+
+<p>The strongest argument is this: Tajikistan already has an official heatwave early-action framework, but the country still has a documented gap in <strong>local heat-health impact data</strong>. That gap is exactly where your project can add value. The IFRC/Red Crescent heatwave protocol says extreme temperatures, including heatwaves, are less explored in Tajikistan than floods, earthquakes and landslides, and that there is no official mechanism linking heatwaves with increases in illness and mortality in target areas. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<p>For Khujand specifically, the official Tajikistan heatwave trigger table includes <strong>Khujand and nearby Sughd districts</strong> under a northern heatwave threshold of <strong>39.5°C</strong>. The protocol says activation occurs when Tajik Hydromet forecasts daytime temperature exceeding <strong>39.5°C in the North</strong> for four consecutive days in July-August, with about five days of lead time. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<p>That means Khujand is not just an academic case. It is already inside the country’s operational heat-risk logic.</p>
+
+<hr>
+
+<h1>1. Why Khujand is a good heatwave and urban-heat pilot</h1>
+
+<h2>1.1 It is in a heat-relevant region</h2>
+
+<p>Khujand has hot, dry summers. WeatherSpark’s climate summary reports a hot season from late May to mid-September, with July as the hottest month, around <strong>36°C average high and 22°C average low</strong>. <sup class="cite">[<a href="https://weatherspark.com/y/106882/Average-Weather-in-Kh%C5%ADjand-Tajikistan?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Khŭjand Climate, Weather By Month, Average ...">Weather Spark</a>]</sup> Advantour’s Tajikistan climate summary also notes that Khujand has some of the hottest weather in the country. <sup class="cite">[<a href="https://www.advantour.com/tajikistan/weather.htm?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Tajikistan Climate and Weather">Advantour</a>]</sup></p>
+
+<p>The 2025 heatwave warning reported by Avesta, citing Tajikistan’s Hydrometeorology Agency, expected <strong>+38°C to +43°C</strong> in valley regions of Sughd during a July heatwave. The same warning advised citizens to limit sun exposure, especially children and elderly people, stay hydrated and avoid unnecessary travel to mountainous and foothill areas. <sup class="cite">[<a href="https://en.avesta.tj/2025/07/19/tajikistan-expects-new-heat-wave-temperature-to-rise-to-46-degrees/" target="_blank" rel="noopener" class="cite-num" title="Tajikistan expects new heat wave: temperature to rise to 46 degrees - Tajikistan News in English">Tajikistan News in English</a>]</sup></p>
+
+<h2>1.2 The official heatwave threshold already names Khujand</h2>
+
+<p>This is important for your challenge submission. You can say:</p>
+
+<blockquote><p>“We are not inventing the hazard threshold from nothing. Tajikistan’s own heatwave early-action protocol identifies Khujand/Sughd as a northern heatwave-risk zone, with a 39.5°C trigger.”</p></blockquote>
+
+<p>The IFRC/Tajikistan heatwave protocol lists <strong>Asht, Khujand, Mastcho, Zafarobod and B. Gafurov</strong> in Sughd at the <strong>+39.5°C</strong> trigger threshold. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<h2>1.3 The heat-health data gap is real</h2>
+
+<p>This is one of your strongest innovation angles. Tajikistan has forecasts, but weaker local impact data. The IFRC protocol says Tajik Hydromet forecasts are available and accessible, but there is no official data on the impact of heatwaves on the local population and no mechanism linking heatwaves with increased illness and mortality. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<p>That creates a clear purpose for ResilienceOS:</p>
+
+<blockquote><p><strong>Not only forecasting heat, but identifying who is exposed, where vulnerability is concentrated, and which local action should happen first.</strong></p></blockquote>
+
+<h2>1.4 Urban heat islands are likely under-measured by official stations</h2>
+
+<p>ThinkHazard classifies Tajikistan’s extreme heat hazard as <strong>medium</strong>, meaning more than a 25% chance of at least one prolonged heat-stress period in the next five years. It also warns that built-up urban areas can have enhanced extreme heat due to the urban heat island effect, and that meteorological stations often avoid urban locations, so they may miss local urban heat. <sup class="cite">[<a href="https://thinkhazard.org/en/report/239-tajikistan/EH" target="_blank" rel="noopener" class="cite-num" title="Think Hazard - Tajikistan
+ - Extreme heat
+">Think Hazard</a>]</sup></p>
+
+<p>This is very relevant for Khujand because the airport/weather station will not necessarily represent dense streets, bazaars, schoolyards, apartment blocks or low-shade neighborhoods.</p>
+
+<h2>1.5 Khujand has useful urban contrast</h2>
+
+<p>Khujand is located on the middle course of the Syr Darya River near the entrance to the Ferghana Valley. <sup class="cite">[<a href="https://www.iranicaonline.org/articles/khujand-city-in-northwestern-tajikistan/" target="_blank" rel="noopener" class="cite-num" title="KHUJAND - Encyclopaedia Iranica">Encyclopaedia Iranica</a>]</sup> This gives you a useful analytical contrast:</p>
+
+<ul><li>dense residential and commercial zones</li><li>bare soil and peri-urban land</li><li>irrigated/vegetated river corridors</li><li>industrial and transport corridors</li><li>schools, clinics, markets and public spaces</li></ul>
+
+<p>This is ideal for an urban heat island analysis because the city likely has strong differences between paved/built surfaces and river/vegetation-adjacent areas.</p>
+
+<hr>
+
+<h1>2. Data availability for Khujand</h1>
+
+<h2>Overall assessment</h2>
+
+<table><thead><tr><th>Data layer</th><th>Availability for Khujand</th><th>Quality for MVP</th><th>Main limitation</th></tr></thead><tbody><tr><td>Weather station temperature</td><td>Available through global station sources and Tajik Hydromet, though official raw access may require request</td><td>Good</td><td>Airport/station may miss street-level heat</td></tr><tr><td>Forecast/warnings</td><td>Available through Tajik Hydromet</td><td>Good</td><td>Operational access/API may need partnership</td></tr><tr><td>Satellite land surface temperature</td><td>Strong</td><td>Very good</td><td>Landsat is not daily; MODIS is coarser</td></tr><tr><td>Vegetation/shade proxies</td><td>Strong</td><td>Very good</td><td>Tree canopy may need validation</td></tr><tr><td>Built-up/impervious surface</td><td>Strong</td><td>Good</td><td>Building materials/roof types need local validation</td></tr><tr><td>Population exposure</td><td>Strong</td><td>Good</td><td>Socioeconomic detail may be coarse</td></tr><tr><td>Schools/clinics/roads</td><td>Available through OSM/HDX, but needs completeness check</td><td>Medium-good</td><td>OSM completeness varies</td></tr><tr><td>Heat-health outcomes</td><td>Weak publicly</td><td>Low without partnership</td><td>This is the main research gap</td></tr><tr><td>Air quality</td><td>Partial</td><td>Medium</td><td>Tajikistan lacks comprehensive AQ monitoring</td></tr></tbody></table>
+
+<hr>
+
+<h1>3. Best datasets for HeatShield Khujand</h1>
+
+<h2>3.1 Weather and heat-stress datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Use in Khujand</th><th>Why it matters</th></tr></thead><tbody><tr><td><strong>Tajik Hydromet forecasts and warnings</strong></td><td>Official heatwave triggers and warning validation</td><td>Tajik Hydromet is the official agency responsible for monitoring, analysis and warning information in the country. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></td></tr><tr><td><strong>NOAA Integrated Surface Database / Global Hourly</strong></td><td>Historical temperature, dew point, wind, humidity, visibility, pressure</td><td>NOAA ISD includes global surface observations such as temperature, dew point, wind, cloud data, pressure and other observed parameters. <sup class="cite">[<a href="https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Global Hourly - Integrated Surface Database (ISD)">NCEI</a>]</sup></td></tr><tr><td><strong>Meteostat</strong></td><td>Easy API access to long-term station weather</td><td>Meteostat provides open long-term time series for thousands of stations and is useful for developer workflows. <sup class="cite">[<a href="https://meteostat.net/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Meteostat: The Weather's Record Keeper">Meteostat</a>]</sup></td></tr><tr><td><strong>NASA POWER</strong></td><td>Point-level temperature, humidity, wind and solar radiation for Khujand coordinates</td><td>NASA POWER provides hourly analysis-ready solar and meteorological data through an API. <sup class="cite">[<a href="https://power.larc.nasa.gov/docs/services/api/temporal/hourly/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Docs | Data Services | Hourly API">Power</a>]</sup></td></tr><tr><td><strong>ERA5 / ERA5-Land</strong></td><td>Historical weather baseline, reanalysis temperature, humidity, wind</td><td>Useful when station records are incomplete or inconsistent.</td></tr><tr><td><strong>ERA5-HEAT / UTCI</strong></td><td>Human thermal stress, not just air temperature</td><td>ERA5-HEAT provides historical reconstruction of human thermal comfort indices, including UTCI. <sup class="cite">[<a href="https://cds.climate.copernicus.eu/datasets/derived-utci-historical?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Thermal comfort indices derived from ERA5 reanalysis">Climate Data Store</a>]</sup></td></tr></tbody></table>
+
+<p><strong>Recommendation:</strong> for the first MVP, use <strong>Tajik Hydromet threshold logic + ERA5-HEAT UTCI + Landsat surface temperature + WorldPop exposure</strong>.</p>
+
+<hr>
+
+<h2>3.2 Urban surface temperature datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Spatial/temporal value</th><th>Use</th></tr></thead><tbody><tr><td><strong>Landsat 8/9 Collection 2 Level 2 Surface Temperature</strong></td><td>High spatial detail, useful for neighborhood-level heat maps</td><td>Maps land surface temperature, hot roofs, bare soil, paved areas and cool vegetation zones. Landsat L2 provides surface reflectance and land surface temperature. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="USGS Landsat 8 Level 2, Collection 2, Tier 1">Google for Developers</a>]</sup></td></tr><tr><td><strong>Landsat 5/7 historical thermal data</strong></td><td>Long-term change analysis from earlier decades</td><td>Useful for showing how urban expansion changed Khujand’s heat pattern.</td></tr><tr><td><strong>MODIS MOD11A1 daily LST</strong></td><td>Daily, but coarser 1 km resolution</td><td>Good for heatwave-day time series and day/night surface-temperature patterns. MOD11A1 provides daily land surface temperature and emissivity. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD11A1?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="MOD11A1.061 Terra Land Surface Temperature and ...">Google for Developers</a>]</sup></td></tr><tr><td><strong>ECOSTRESS</strong></td><td>High-value thermal snapshots, if available for your dates</td><td>Good for urban thermal stress, but not as simple as Landsat/MODIS for an MVP.</td></tr></tbody></table>
+
+<p><strong>Key point:</strong> Landsat is best for maps. MODIS is best for daily temporal rhythm. ERA5-HEAT is best for human heat-stress indices.</p>
+
+<hr>
+
+<h2>3.3 Vegetation, shade and land-cover datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Use</th></tr></thead><tbody><tr><td><strong>Sentinel-2 Level-2A Surface Reflectance</strong></td><td>NDVI, NDWI, vegetation health, water/vegetation cooling proxies. Sentinel-2 provides high-resolution multispectral imaging for land monitoring and has a 5-day revisit interval. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Harmonized Sentinel-2 MSI: MultiSpectral Instrument ...">Google for Developers</a>]</sup></td></tr><tr><td><strong>Dynamic World 10 m land cover</strong></td><td>Classify built area, vegetation, water, bare soil and crops. Dynamic World is a near-real-time 10 m land-use/land-cover dataset. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_DYNAMICWORLD_V1?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Dynamic World V1 | Earth Engine Data Catalog">Google for Developers</a>]</sup></td></tr><tr><td><strong>GHSL built-up surface</strong></td><td>Built-up density, urban expansion, residential vs non-residential built surface. GHSL provides built-up surface distribution at 100 m and 10 m products. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/JRC_GHSL_P2023A_GHS_BUILT_S?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="GHSL: Global built-up surface 1975-2030 (P2023A)">Google for Developers</a>]</sup></td></tr><tr><td><strong>OpenStreetMap / Geofabrik Tajikistan extract</strong></td><td>Roads, buildings, land use, amenities, schools, clinics, markets. Geofabrik provides downloadable OSM extracts for Tajikistan. <sup class="cite">[<a href="https://download.geofabrik.de/asia/tajikistan.html?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Download OpenStreetMap for Tajikistan">Geofabrik Download Server</a>]</sup></td></tr></tbody></table>
+
+<hr>
+
+<h2>3.4 Population and vulnerability datasets</h2>
+
+<table><thead><tr><th>Dataset</th><th>Use</th></tr></thead><tbody><tr><td><strong>WorldPop Tajikistan 100 m population</strong></td><td>Estimate population exposed to high-heat pixels. HDX lists constrained 2020 WorldPop population counts for Tajikistan at 100 m resolution. <sup class="cite">[<a href="https://data.humdata.org/dataset/worldpop-population-counts-for-tajikistan?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Tajikistan - Population Counts | Humanitarian Dataset | HDX">Humanitarian Data Exchange</a>]</sup></td></tr><tr><td><strong>WorldPop age/sex layers</strong></td><td>Identify children, elderly and other age-based vulnerable groups. Google Earth Engine notes WorldPop has population by age and sex for 2020. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/WorldPop_GP_100m_pop?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="WorldPop Global Project Population Data">Google for Developers</a>]</sup></td></tr><tr><td><strong>Tajikistan 2020 Population and Housing Census</strong></td><td>City/district population, age, housing, roof/wall material, household conditions. The official statistics agency provides 2020 census tables, including population distribution, age/sex tables and housing-stock/living-condition tables. <sup class="cite">[<a href="https://www.stat.tj/en/population-and-housing-census/" target="_blank" rel="noopener" class="cite-num" title="Population and Housing Census - Agency on statistics under the President of the Republic of Tajikistan">Stat</a>]</sup></td></tr><tr><td><strong>HDX / HOTOSM health facilities</strong></td><td>Locate hospitals, clinics, pharmacies and dentists from OSM-derived humanitarian data. <sup class="cite">[<a href="https://data.humdata.org/dataset/hotosm_tjk_health_facilities?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Tajikistan : Health Facilities (OpenStreetMap Export)">Humanitarian Data Exchange</a>]</sup></td></tr><tr><td><strong>OpenStreetMap schools, roads and amenities</strong></td><td>Map schools, kindergartens, clinics, bazaars, road corridors and public facilities.</td></tr></tbody></table>
+
+<p>The vulnerability layer should focus on:</p>
+
+<ul><li>children under 5</li><li>elderly people</li><li>people with disabilities</li><li>people with non-communicable diseases</li><li>pregnant women</li><li>outdoor workers</li><li>poor households</li><li>households without reliable cooling</li><li>schools, clinics, bazaars and transport stops</li></ul>
+
+<p>These groups are not arbitrary. IFRC’s Tajikistan heatwave material identifies young children, elderly people, people with disabilities, pregnant women, people with NCDs and farmers/outdoor workers as highly vulnerable. <sup class="cite">[<a href="https://www.forecast-based-financing.org/wp-content/uploads/2020/04/Factsheet_Tajikistan.pdf" target="_blank" rel="noopener" class="cite-num" title="">Forecast-based Financing</a>]</sup></p>
+
+<hr>
+
+<h2>3.5 Health and air-quality data</h2>
+
+<p>This is the weakest public-data layer, but also the biggest opportunity.</p>
+
+<p>The IFRC heatwave protocol states that Tajikistan lacks official data linking heatwaves to illness and mortality in target areas. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup> For your MVP, you can start without health records by using a <strong>vulnerability proxy model</strong>. Later, you can strengthen the project through partnerships with:</p>
+
+<ul><li>Khujand city health department</li><li>Sughd regional health authorities</li><li>hospitals and ambulance services</li><li>Red Crescent Society of Tajikistan</li><li>schools and kindergartens</li><li>local mahalla/community leaders</li></ul>
+
+<p>Air quality matters because heat and pollution can compound respiratory and cardiovascular stress. World Bank documentation notes that air pollution is especially high in cities and towns including Khujand, Spitamen, Gafurov and Kanibadam, with vehicle emissions and mining/processing industries among contributors. <sup class="cite">[<a href="https://documents1.worldbank.org/curated/en/268801591265809991/txt/Environmental-and-Social-Impact-Assessment-Fourth-Phase-of-the-Central-Asia-Regional-Links-Program-P166820.txt" target="_blank" rel="noopener" class="cite-num" title="documents1.worldbank.org">World Bank</a>]</sup> However, another World Bank air-quality document says Tajikistan has no comprehensive air-quality monitoring system and that data availability is a challenge. <sup class="cite">[<a href="https://documents1.worldbank.org/curated/en/099081723150539839/pdf/P18001404c70c408509f4e0291eb72b882e.pdf?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Air Quality Management in Tajikistan - World Bank Document">World Bank</a>]</sup></p>
+
+<p>So: use air quality as a secondary layer, not the core MVP.</p>
+
+<hr>
+
+<h1>4. Best places inside Khujand to analyze first</h1>
+
+<p>I would not start with the entire city equally. Start with <strong>heat-relevant urban typologies</strong>.</p>
+
+<h2>Priority zone type 1: dense residential microdistricts</h2>
+
+<p>Look for areas with:</p>
+
+<ul><li>high building density</li><li>low tree cover</li><li>many flat roofs or metal/concrete roofs</li><li>limited open green space</li><li>high nighttime heat retention</li><li>many children and elderly residents</li></ul>
+
+<p>These are likely to show strong land surface temperature and poor nighttime cooling.</p>
+
+<h2>Priority zone type 2: schools and kindergartens</h2>
+
+<p>This is a strong Oxford-challenge angle because UNICEF stresses that children are especially vulnerable to heat. UNICEF reported that rising temperatures across Europe and Central Asia killed an estimated 377 children in 2021 and urged governments to invest in heat-health action plans, early-warning systems, education-facility adaptation, urban design and safe water access. <sup class="cite">[<a href="https://www.unicef.org/tajikistan/press-releases/rising-heat-across-europe-and-central-asia-kills-nearly-400-children-year" target="_blank" rel="noopener" class="cite-num" title="Rising heat across Europe and Central Asia kills nearly 400 children a year">UNICEF</a>]</sup></p>
+
+<p>A good product question:</p>
+
+<blockquote><p>“Which schools and kindergartens in Khujand need shade, cool roofs, water points or adjusted summer schedules first?”</p></blockquote>
+
+<h2>Priority zone type 3: hospitals, clinics and pharmacies</h2>
+
+<p>Clinics and hospitals matter twice:</p>
+
+<ol><li>They serve vulnerable people.</li><li>They must remain functional during heatwaves.</li></ol>
+
+<p>Use HOTOSM/OSM health facilities and then manually validate the critical ones. <sup class="cite">[<a href="https://data.humdata.org/dataset/hotosm_tjk_health_facilities?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Tajikistan : Health Facilities (OpenStreetMap Export)">Humanitarian Data Exchange</a>]</sup></p>
+
+<h2>Priority zone type 4: Panjshanbe market and other bazaars/public spaces</h2>
+
+<p>Markets are important because many people spend time outdoors or semi-outdoors, including workers, elderly people, vendors and shoppers. Heat risk in a bazaar is not captured well by airport temperature.</p>
+
+<p>Variables to map:</p>
+
+<ul><li>shade availability</li><li>surface temperature</li><li>crowd density proxy</li><li>distance to drinking water</li><li>distance to clinics</li><li>PM2.5 if data exists</li><li>thermal comfort sensors</li></ul>
+
+<h2>Priority zone type 5: transport corridors and bus stops</h2>
+
+<p>Transport corridors often combine asphalt, traffic emissions, low shade and high pedestrian exposure. They are also practical intervention sites: shade canopies, water points, reflective materials and tree planting.</p>
+
+<h2>Priority zone type 6: river-to-city cooling gradient</h2>
+
+<p>The Syr Darya corridor gives you a natural experiment. Compare:</p>
+
+<ul><li>riverbank/vegetated areas</li><li>parks and irrigated land</li><li>dense residential blocks</li><li>bare soil/peri-urban land</li><li>industrial/road surfaces</li></ul>
+
+<p>This can produce a strong finding:</p>
+
+<blockquote><p>“Distance from vegetation and river cooling corridors predicts neighborhood heat exposure.”</p></blockquote>
+
+<hr>
+
+<h1>5. Strong research questions for Khujand</h1>
+
+<h2>Question 1: Where are Khujand’s urban heat islands?</h2>
+
+<p><strong>Data:</strong> Landsat LST, MODIS LST, Sentinel-2 NDVI, GHSL built-up, Dynamic World land cover.</p>
+
+<p><strong>Output:</strong> 30 m map of average summer surface heat and extreme-heat-day anomalies.</p>
+
+<p><strong>Likely finding:</strong> high LST in dense built/bare soil/industrial zones; lower LST near vegetation, irrigated land and river corridors.</p>
+
+<hr>
+
+<h2>Question 2: Who is most exposed?</h2>
+
+<p><strong>Data:</strong> WorldPop 100 m population, WorldPop age/sex, census tables, OSM buildings, schools, clinics.</p>
+
+<p><strong>Output:</strong> vulnerable-population heat exposure index.</p>
+
+<p><strong>Risk formula:</strong></p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">Heat Exposure Score =
+  LST anomaly
++ UTCI exceedance frequency
++ population density
++ children/elderly share
++ low vegetation
++ built-up density
++ distance from clinics/cooling places</pre></div>
+
+
+<hr>
+
+<h2>Question 3: Does official temperature underestimate city heat?</h2>
+
+<p><strong>Data:</strong> Khujand airport/station weather, low-cost sensors, Landsat LST, MODIS night LST.</p>
+
+<p><strong>Output:</strong> station-vs-street heat bias.</p>
+
+<p><strong>Why it matters:</strong> ThinkHazard warns that urban heat island temperatures may not be captured by standard meteorological stations, which often avoid urban locations. <sup class="cite">[<a href="https://thinkhazard.org/en/report/239-tajikistan/EH" target="_blank" rel="noopener" class="cite-num" title="Think Hazard - Tajikistan
+ - Extreme heat
+">Think Hazard</a>]</sup></p>
+
+<hr>
+
+<h2>Question 4: Where should cooling interventions go first?</h2>
+
+<p><strong>Data:</strong> heat score + schools/clinics + population + shade/vegetation + cost assumptions.</p>
+
+<p><strong>Output:</strong> ranked intervention list.</p>
+
+<p>Example:</p>
+
+<table><thead><tr><th>Rank</th><th>Place type</th><th>Intervention</th></tr></thead><tbody><tr><td>1</td><td>School with high LST, low NDVI, many young children</td><td>Shade canopy + cool roof</td></tr><tr><td>2</td><td>Clinic in hot dense district</td><td>Cool roof + backup water + waiting-area shade</td></tr><tr><td>3</td><td>Bazaar/market</td><td>Drinking-water points + shade + heat messages</td></tr><tr><td>4</td><td>Bus stops on hot corridors</td><td>Shade structures + reflective pavement</td></tr><tr><td>5</td><td>Dense residential blocks</td><td>tree/shade priority + reflective roof program</td></tr></tbody></table>
+
+<hr>
+
+<h1>6. What your ResilienceOS Khujand MVP should look like</h1>
+
+<h2>MVP name</h2>
+
+<p><strong>HeatShield Khujand</strong></p>
+
+<h2>One-sentence pitch</h2>
+
+<p>HeatShield Khujand combines satellite heat maps, official heatwave thresholds, population vulnerability and local sensor data to rank where the city should act first before and during heatwaves.</p>
+
+<h2>Core modules</h2>
+
+<h3>Module 1: Heat hazard map</h3>
+
+<ul><li>air temperature</li><li>land surface temperature</li><li>UTCI heat-stress index</li><li>hot days above 35°C, 38°C, 39.5°C and 40°C</li><li>hot nights above 20°C or 25°C</li><li>heatwave periods lasting 3-5 days</li></ul>
+
+<h3>Module 2: Urban heat island map</h3>
+
+<ul><li>Landsat LST</li><li>MODIS day/night LST</li><li>NDVI</li><li>built-up density</li><li>land-cover type</li><li>distance to river/parks/vegetation</li></ul>
+
+<h3>Module 3: Vulnerability map</h3>
+
+<ul><li>population density</li><li>children under 5</li><li>elderly population</li><li>schools</li><li>clinics</li><li>low-income proxy if available</li><li>housing/roof material if census detail is accessible</li><li>distance to cooling/water/health services</li></ul>
+
+<h3>Module 4: Action recommender</h3>
+
+<p>For each hotspot, the tool should recommend one or more actions:</p>
+
+<ul><li>SMS/Telegram heat alert</li><li>water distribution</li><li>ORS distribution</li><li>cooling-center activation</li><li>school schedule change</li><li>outdoor-work advisory</li><li>shaded waiting area</li><li>cool roof</li><li>tree/shade intervention</li><li>clinic readiness check</li></ul>
+
+<h3>Module 5: Sensor validation</h3>
+
+<p>Deploy 10-20 low-cost temperature/humidity sensors:</p>
+
+<ul><li>dense residential district</li><li>schoolyard</li><li>clinic entrance</li><li>market</li><li>bus stop</li><li>riverbank/park</li><li>bare-soil edge</li><li>shaded street</li><li>high-traffic corridor</li></ul>
+
+<p>This converts the project from “remote sensing dashboard” into a practical urban resilience system.</p>
+
+<hr>
+
+<h1>7. A good first heat-risk score for Khujand</h1>
+
+<p>Use this for the prototype:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">Khujand Heat Risk Score =
+0.25 × normalized Landsat LST anomaly
++ 0.20 × UTCI extreme-heat frequency
++ 0.15 × inverse NDVI
++ 0.15 × GHSL built-up density
++ 0.15 × vulnerable population density
++ 0.10 × distance from cooling assets</pre></div>
+
+
+<p>Where cooling assets are:</p>
+
+<ul><li>parks</li><li>riverbank green areas</li><li>clinics</li><li>schools with shade</li><li>water points</li><li>public buildings usable as cooling spaces</li></ul>
+
+<p>Then create separate scores for:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">School Heat Priority Score
+Clinic Heat Priority Score
+Market Heat Priority Score
+Residential Vulnerability Score
+Outdoor Worker Exposure Score</pre></div>
+
+
+<p>This is better than one generic map.</p>
+
+<hr>
+
+<h1>8. Why the topic is important enough for the challenge</h1>
+
+<p>You have four strong evidence points.</p>
+
+<h2>1. Heatwaves are officially recognized but underexplored in Tajikistan</h2>
+
+<p>The IFRC/Tajikistan protocol says heatwaves are less explored than floods, earthquakes and landslides, and that impact data is insufficient. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<h2>2. Khujand/Sughd has an official heatwave threshold</h2>
+
+<p>The official heatwave trigger includes Khujand and nearby Sughd districts at 39.5°C. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<h2>3. Recent heatwaves have reached dangerous levels</h2>
+
+<p>In 2019, Tajik Hydromet issued a heatwave alert covering southern, northern and central Tajikistan, with temperatures reaching <strong>44-46°C</strong>, and the heatwave continued for four weeks. <sup class="cite">[<a href="https://www.forecast-based-financing.org/wp-content/uploads/2020/04/Factsheet_Tajikistan.pdf" target="_blank" rel="noopener" class="cite-num" title="">Forecast-based Financing</a>]</sup> In July 2025, a Hydromet-cited warning expected <strong>38-43°C</strong> in valley regions of Sughd. <sup class="cite">[<a href="https://en.avesta.tj/2025/07/19/tajikistan-expects-new-heat-wave-temperature-to-rise-to-46-degrees/" target="_blank" rel="noopener" class="cite-num" title="Tajikistan expects new heat wave: temperature to rise to 46 degrees - Tajikistan News in English">Tajikistan News in English</a>]</sup></p>
+
+<h2>4. Climate projections point toward worsening heat risk</h2>
+
+<p>The GIZ Climate Change Profile for Tajikistan projects annual mean temperature increases of <strong>1.3°C to 6.3°C by 2080</strong>, depending on emissions, and says heat days above 40°C are expected to increase by 12.5 days by 2080 compared with 1986-2005, increasing heat stress and heat-related mortality. <sup class="cite">[<a href="https://www.landuse-ca.org/wp-content/uploads/2019/04/2020_GIZ-Climate-Profile-Tajikistan_EN.pdf" target="_blank" rel="noopener" class="cite-num" title="Climate Change Profile Tajikistan">landuse-ca.org</a>]</sup></p>
+
+<hr>
+
+<h1>9. What else you could do to make it stronger</h1>
+
+<h2>Add a “heat action protocol assistant”</h2>
+
+<p>Use Tajikistan’s existing heatwave trigger logic, then translate the warning into local actions.</p>
+
+<p>Example:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">If forecast &gt; 39.5°C for 4 consecutive days in Khujand:
+  activate school alerts
+  notify clinics
+  open cooling points
+  distribute water/ORS to priority neighborhoods
+  send outdoor-worker advisory
+  check elderly and disabled residents through volunteers</pre></div>
+
+
+<p>This aligns with the Tajikistan Early Action Protocol, which uses forecast-based activation and Red Crescent/local authority coordination. <sup class="cite">[<a href="https://adore.ifrc.org/Download.aspx?FileId=548935" target="_blank" rel="noopener" class="cite-num" title="">Adore</a>]</sup></p>
+
+<h2>Add a “cool roof and shade optimizer”</h2>
+
+<p>Use Landsat LST + roof/building data + schools/clinics.</p>
+
+<p>Question:</p>
+
+<blockquote><p>“Which 50 roofs should Khujand coat first to reduce heat exposure for the largest number of children, patients and elderly residents?”</p></blockquote>
+
+<p>This gives you a material intervention, not only a data platform.</p>
+
+<h2>Add a “sensor-placement optimizer”</h2>
+
+<p>Do not randomly place sensors. Place them where information value is highest:</p>
+
+<ul><li>predicted hottest zones</li><li>high population density</li><li>schools/clinics/markets</li><li>low vegetation</li><li>far from existing weather station</li><li>different surface types</li></ul>
+
+<p>Output:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">Best 20 sensor locations for Khujand heat monitoring</pre></div>
+
+
+<p>This is a strong climate-tech feature.</p>
+
+<h2>Add local-language heat communication</h2>
+
+<p>Make the system usable in Tajik and Russian:</p>
+
+<ul><li>SMS heat warnings</li><li>Telegram bot</li><li>printable one-page heat safety sheets</li><li>school/clinic alert templates</li><li>“what to do today” instructions</li></ul>
+
+<p>WHO/WMO guidance emphasizes that heat-health warning systems should combine meteorology, public health, risk communication and action planning. <sup class="cite">[<a href="https://www.who.int/publications/m/item/heatwaves-and-health--guidance-on-warning-system-development?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Heatwaves and health: guidance on warning-system ...">World Health Organization</a>]</sup></p>
+
+<h2>Add health-data partnership later</h2>
+
+<p>For the challenge MVP, you can use proxies. For a stronger real-world version, request anonymized daily counts from clinics/hospitals:</p>
+
+<ul><li>ambulance calls</li><li>heatstroke cases</li><li>dehydration cases</li><li>cardiovascular complaints</li><li>respiratory complaints</li><li>emergency admissions</li><li>mortality if legally accessible</li><li>school absences during heat periods</li></ul>
+
+<p>The key is privacy-preserving daily counts, not personal medical records.</p>
+
+<hr>
+
+<h1>10. Recommended first 30-day work plan</h1>
+
+<h2>Week 1: Data inventory and study boundary</h2>
+
+<ul><li>define Khujand boundary</li><li>collect OSM roads/buildings/facilities</li><li>collect WorldPop population</li><li>collect Sentinel-2 NDVI</li><li>collect GHSL built-up</li><li>collect Landsat summer LST for 2013-2025</li><li>collect MODIS daily LST for summer heatwave periods</li><li>collect station/reanalysis temperature</li></ul>
+
+<h2>Week 2: First maps</h2>
+
+<p>Create:</p>
+
+<ol><li>Summer mean LST map  </li><li>Top 5% hottest pixels  </li><li>NDVI/vegetation deficit map  </li><li>Built-up density map  </li><li>Population exposure map  </li><li>Schools/clinics/bazaars overlay  </li><li>River-to-city heat gradient  </li></ol>
+
+<h2>Week 3: Risk score and intervention ranking</h2>
+
+<p>Create:</p>
+
+<ul><li>Heat Risk Score</li><li>School Heat Priority Score</li><li>Clinic Heat Priority Score</li><li>Market/Public Space Heat Priority Score</li><li>Sensor Placement Priority Score</li></ul>
+
+<h2>Week 4: Prototype story</h2>
+
+<p>Prepare a dashboard or slide deck with:</p>
+
+<ul><li>why Khujand</li><li>data sources</li><li>heat-risk map</li><li>top 20 priority sites</li><li>action recommendations</li><li>cost/impact logic</li><li>sensor plan</li><li>partnership plan</li></ul>
+
+<hr>
+
+<h1>11. My recommended challenge framing</h1>
+
+<p>Use this as the project thesis:</p>
+
+<blockquote><p><strong>Khujand already faces dangerous heat thresholds, but official weather forecasts alone do not identify street-level urban heat exposure or vulnerable people. HeatShield Khujand transforms forecasts, satellite data, population vulnerability and local sensors into ranked actions for schools, clinics, markets and neighborhoods.</strong></p></blockquote>
+
+<p>The project should not claim to “solve climate change.” It should claim to solve a precise decision problem:</p>
+
+<blockquote><p><strong>When a heatwave is forecast, where should Khujand act first?</strong></p></blockquote>
+
+<p>That is concrete, testable and relevant.</p></div></div>
+    <div class="message user-message"><div class="content"><p>@Web search I want to move this conversation to codex. How can I do this</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>You cannot directly “transfer” a ChatGPT conversation into Codex as a live shared thread. The practical way is to <strong>copy a compact project brief</strong> into Codex, plus any files, repo links, and the exact task you want Codex to execute.</p>
+
+<p>Codex is meant to work with a codebase/repository, read and change files, and run commands in the selected directory. OpenAI’s Codex CLI documentation describes it as a local coding agent that can read, change and run code on your machine. <sup class="cite">[<a href="https://developers.openai.com/codex/cli?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Codex CLI">OpenAI Developers</a>]</sup> The OpenAI Codex GitHub repo also says you can run <code>codex</code> and sign in with ChatGPT to use it with eligible ChatGPT plans. <sup class="cite">[<a href="https://github.com/openai/codex?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="openai/codex: Lightweight coding agent that runs in your ...">GitHub</a>]</sup></p>
+
+<h2>Best way to move this climate project to Codex</h2>
+
+<h3>1. Create a project folder</h3>
+
+<p>Example:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span></div><pre class="code-block hljs"><span class="hljs-built_in">mkdir</span> heatshield-khujand
+<span class="hljs-built_in">cd</span> heatshield-khujand</pre></div>
+
+
+<p>Recommended structure:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">heatshield-khujand/
+  README.md
+  data/
+    raw/
+    processed/
+  notebooks/
+  src/
+  outputs/
+    maps/
+    charts/
+  docs/</pre></div>
+
+
+<h3>2. Put this conversation summary into <code>README.md</code></h3>
+
+<p>Copy this into a file:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">markdown</span></div><pre class="code-block hljs"><span class="hljs-section"># HeatShield Khujand / ResilienceOS Heat</span>
+
+<span class="hljs-section">## Goal</span>
+Build a prototype climate-tech tool for Khujand, Tajikistan, focused on heatwaves and urban heat. The system should identify urban heat hotspots, vulnerable populations, schools, clinics, markets, and priority places for cooling interventions.
+
+<span class="hljs-section">## Challenge context</span>
+This project is for the Oxford Saïd Global Climate Tech Challenge 2026. The theme asks how data, sensors, and materials can help communities predict, prepare for, adapt to, and recover faster from extreme weather events.
+
+<span class="hljs-section">## Core thesis</span>
+Khujand is a strong pilot city because Tajikistan already has a heatwave early-action framework, but local heat-health impact data is weak. The project should move from weather forecasting to impact-based local decision support.
+
+<span class="hljs-section">## Pilot city</span>
+Khujand, Sughd Region, Tajikistan.
+
+<span class="hljs-section">## Main hazard</span>
+Heatwaves and urban heat island exposure.
+
+<span class="hljs-section">## Key problem</span>
+Official weather forecasts can warn about high temperature, but they do not show street-level heat exposure, vulnerable communities, or which schools, clinics, markets, and neighborhoods should receive interventions first.
+
+<span class="hljs-section">## Proposed product</span>
+HeatShield Khujand: a ResilienceOS module that combines satellite data, reanalysis weather data, population exposure, facility maps, and optional local sensors to rank heat-risk areas and recommend actions.
+
+<span class="hljs-section">## Data sources to investigate</span>
+<span class="hljs-bullet">-</span> ERA5 and ERA5-Land for historical weather and land variables
+<span class="hljs-bullet">-</span> ERA5-HEAT / UTCI for human thermal stress
+<span class="hljs-bullet">-</span> Landsat 8/9 Collection 2 Level 2 land surface temperature
+<span class="hljs-bullet">-</span> MODIS MOD11A1 daily land surface temperature
+<span class="hljs-bullet">-</span> Sentinel-2 Level-2A for NDVI and vegetation
+<span class="hljs-bullet">-</span> Dynamic World 10 m land cover
+<span class="hljs-bullet">-</span> GHSL built-up surface
+<span class="hljs-bullet">-</span> WorldPop Tajikistan 100 m population
+<span class="hljs-bullet">-</span> WorldPop age/sex layers if available
+<span class="hljs-bullet">-</span> Tajikistan 2020 census tables
+<span class="hljs-bullet">-</span> OpenStreetMap / Geofabrik Tajikistan extract
+<span class="hljs-bullet">-</span> HDX / HOTOSM health facilities
+<span class="hljs-bullet">-</span> NASA POWER for point weather data
+<span class="hljs-bullet">-</span> NOAA ISD / Meteostat for station weather
+<span class="hljs-bullet">-</span> Tajik Hydromet thresholds and warnings if accessible
+
+<span class="hljs-section">## Initial heat-risk score</span>
+Heat Risk Score =
+0.25 × normalized Landsat LST anomaly
+<span class="hljs-bullet">+</span> 0.20 × UTCI extreme-heat frequency
+<span class="hljs-bullet">+</span> 0.15 × inverse NDVI
+<span class="hljs-bullet">+</span> 0.15 × GHSL built-up density
+<span class="hljs-bullet">+</span> 0.15 × vulnerable population density
+<span class="hljs-bullet">+</span> 0.10 × distance from cooling assets
+
+<span class="hljs-section">## Priority outputs</span>
+<span class="hljs-bullet">1.</span> Summer land surface temperature map
+<span class="hljs-bullet">2.</span> Urban heat island map
+<span class="hljs-bullet">3.</span> NDVI and vegetation-deficit map
+<span class="hljs-bullet">4.</span> Built-up density map
+<span class="hljs-bullet">5.</span> Population exposure map
+<span class="hljs-bullet">6.</span> Schools, clinics, markets, and transport-stop exposure layer
+<span class="hljs-bullet">7.</span> Heat Risk Score raster
+<span class="hljs-bullet">8.</span> Top 20 priority intervention sites
+<span class="hljs-bullet">9.</span> Sensor-placement priority map
+<span class="hljs-bullet">10.</span> Simple dashboard or notebook with maps and charts
+
+<span class="hljs-section">## Intervention recommendations</span>
+<span class="hljs-bullet">-</span> Cool roofs
+<span class="hljs-bullet">-</span> Shade canopies
+<span class="hljs-bullet">-</span> Trees and green corridors
+<span class="hljs-bullet">-</span> Water points
+<span class="hljs-bullet">-</span> Cooling centers
+<span class="hljs-bullet">-</span> Clinic readiness checks
+<span class="hljs-bullet">-</span> School schedule changes
+<span class="hljs-bullet">-</span> SMS or Telegram heat alerts
+<span class="hljs-bullet">-</span> Outdoor-worker advisories
+
+<span class="hljs-section">## MVP scope</span>
+Start with public datasets only. Use Google Earth Engine, Python, GeoPandas, rasterio, xarray, pandas, matplotlib, folium or kepler.gl. Later, add local temperature/humidity sensors and anonymized health/ambulance data if partnerships become available.
+
+<span class="hljs-section">## First task for Codex</span>
+Create the initial project scaffold, a Python environment file, and a notebook/script that downloads or accesses open data for Khujand and produces a first map of land surface temperature, NDVI, built-up area, and population exposure.</pre></div>
+
+
+<h3>3. Open Codex in that folder</h3>
+
+<p>If you use Codex CLI:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">bash</span></div><pre class="code-block hljs">codex</pre></div>
+
+
+<p>Then paste the task below.</p>
+
+<h2>Prompt to paste into Codex</h2>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">You are helping me build HeatShield Khujand, a climate-tech prototype for heatwave and urban heat resilience in Khujand, Tajikistan.
+
+Read the README.md and create a clean project scaffold.
+
+Tasks:
+1. Create a Python project structure with folders: data/raw, data/processed, notebooks, src, outputs/maps, outputs/charts, docs.
+2. Create requirements.txt or environment.yml with geospatial/data packages:
+   pandas, geopandas, numpy, rasterio, rioxarray, xarray, matplotlib, folium, shapely, pyproj, requests, osmnx, earthengine-api if appropriate.
+3. Create src/config.py with Khujand bounding box and project constants.
+4. Create a notebook or script called notebooks/01_khujand_data_inventory.ipynb or src/01_data_inventory.py.
+5. In the first version, use open data sources where possible:
+   - OpenStreetMap for roads, buildings, schools, clinics, markets if available
+   - WorldPop or placeholder instructions for population raster
+   - Sentinel-2 or Landsat access instructions through Google Earth Engine
+   - NASA POWER API for point weather near Khujand
+6. Produce initial outputs:
+   - map of Khujand boundary/bounding box
+   - OSM roads and facilities map
+   - simple weather time series from NASA POWER if API access works
+   - documentation of which datasets require manual download or Earth Engine authentication
+7. Write clear TODOs for the next step: Landsat LST, NDVI, GHSL built-up, WorldPop population, heat-risk score.
+
+Important:
+- Do not fake data.
+- If a dataset requires authentication or manual download, write exact instructions.
+- Prefer reproducible scripts.
+- Keep code modular and readable.</pre></div>
+
+
+<h2>If you use ChatGPT Codex in browser</h2>
+
+<p>Go to <strong>Codex</strong> from ChatGPT, create or open a workspace/repo, then paste the same <code>README.md</code> and Codex prompt. The current Codex page describes Codex as an AI assistant for work and code with project/task workflows. <sup class="cite">[<a href="https://chatgpt.com/codex/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Codex | AI Assistant for Work and Code">ChatGPT</a>]</sup></p>
+
+<h2>What you should not do</h2>
+
+<p>Do not paste the whole long conversation. Codex will waste context on explanations. Give it:</p>
+
+<ol><li>the project brief  </li><li>the datasets  </li><li>the desired file structure  </li><li>the exact first coding task  </li></ol>
+
+<p>That is enough.</p>
+
+<h2>Best next step</h2>
+
+<p>Start with a repo called:</p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">text</span></div><pre class="code-block hljs">heatshield-khujand</pre></div>
+
+
+<p>Then ask Codex to build <strong>only the data inventory and first maps</strong>. After that, give it the second task: Landsat/Sentinel/WorldPop heat-risk scoring.</p></div></div>
+    <div class="message user-message"><div class="content"><p>@Web search Give him a complete context which all of the messages of me and you so far</p></div></div>
+    <div class="message assistant-message"><div class="content"><p>Yes. Paste the text below into Codex as the <strong>complete project context</strong>. It is written for Codex so it can start building the repo without needing the whole ChatGPT thread.</p>
+
+<p>Codex can read, edit and run code in the selected project directory, so this context should go into <code>README.md</code>, <code>docs/project_context.md</code>, or directly into the first Codex prompt. OpenAI describes Codex CLI as a coding agent that can read, change and run code locally in the selected directory. <sup class="cite">[<a href="https://developers.openai.com/codex/cli?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Codex CLI">OpenAI Developers</a>]</sup></p>
+
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">markdown</span></div><pre class="code-block hljs"><span class="hljs-section"># Complete Project Context for Codex</span>
+<span class="hljs-section"># Project: ResilienceOS / HeatShield Khujand</span>
+
+<span class="hljs-section">## 0. Who is giving this task</span>
+
+I am participating in the Oxford Saïd Global Climate Tech Challenge 2026. I want to create a serious climate-tech/data-science project focused on extreme weather events, especially heatwaves and urban heat.
+
+The challenge theme asks how we can predict, prepare for, adapt to, and recover faster from extreme weather events such as storms, floods, droughts, forest fires and heatwaves. It also asks what role data, sensors and new materials can play in building community resilience.
+
+After discussing several possible directions, I chose to focus on:
+
+<span class="hljs-strong">**ResilienceOS Heat / HeatShield Khujand**</span>
+A data-driven heatwave and urban heat resilience tool for Khujand city, Tajikistan.
+
+The goal is not to build a generic climate dashboard. The goal is to build an actionable local decision-support system that answers:
+
+<span class="hljs-quote">&gt; When a dangerous heatwave is forecast, where should Khujand act first, who is most exposed, and what intervention gives the best resilience return?</span>
+
+---
+
+<span class="hljs-section">## 1. Original challenge background</span>
+
+Extreme weather events are becoming more frequent and severe:
+<span class="hljs-bullet">-</span> storms
+<span class="hljs-bullet">-</span> floods
+<span class="hljs-bullet">-</span> droughts
+<span class="hljs-bullet">-</span> forest fires
+<span class="hljs-bullet">-</span> heatwaves
+
+The core challenge question:
+<span class="hljs-bullet">-</span> How can we predict and prepare for these events?
+<span class="hljs-bullet">-</span> Can we create tools that help communities adapt or recover faster?
+<span class="hljs-bullet">-</span> What role could data, sensors or new materials play in building resilience?
+
+The initial analysis showed that data analysis can be effective if it moves beyond raw hazard prediction and focuses on impact-based prediction and action prioritization.
+
+Important conceptual model:</pre></div>
+<p>text</p>
+<p>Risk = Hazard × Exposure × Vulnerability ÷ Coping Capacity</p>
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">plaintext</span></div><pre class="code-block hljs">For this project:
+<span class="hljs-literal">-</span> Hazard = heatwave / extreme urban heat
+<span class="hljs-literal">-</span> Exposure = people, schools, clinics, markets, outdoor workers, roads, public places
+<span class="hljs-literal">-</span> Vulnerability = children, elderly people, pregnant women, disabled people, poor households, people without cooling, outdoor workers
+<span class="hljs-literal">-</span> Coping capacity = warning systems, shade, water, cooling centers, clinics, sensors, city response, community volunteers
+
+The strongest principle:
+
+&gt; Do not only predict weather. Predict local impact and recommend action.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 2. Earlier project options considered</span>
+
+We discussed several possible climate-tech directions:
+
+<span class="hljs-comment">### A. Heatwave Resilience Tool for schools, clinics and vulnerable neighborhoods</span>
+This became the selected direction.
+
+Possible interventions:
+<span class="hljs-literal">-</span> cool roofs
+<span class="hljs-literal">-</span> shade trees
+<span class="hljs-literal">-</span> reflective pavements
+<span class="hljs-literal">-</span> water points
+<span class="hljs-literal">-</span> cooling centers
+<span class="hljs-literal">-</span> school schedule changes
+<span class="hljs-literal">-</span> heat-warning SMS or Telegram alerts
+
+<span class="hljs-comment">### B. Flood Impact Early Warning and Evacuation Prioritizer</span>
+A possible alternative using rainfall, soil moisture, river discharge, elevation, land cover and exposure layers.
+
+<span class="hljs-comment">### C. Wildfire Risk, Detection and Sensor Placement Optimizer</span>
+A possible alternative using satellite fire detections, vegetation dryness, wind, humidity, settlements and sensor placement.
+
+<span class="hljs-comment">### D. Drought Early Warning for agriculture and water security</span>
+A possible alternative using rainfall anomaly, soil moisture, vegetation stress and water storage.
+
+<span class="hljs-comment">### E. Post-disaster Recovery Prioritization Tool</span>
+A tool that ranks roads, clinics, schools, bridges and communities for recovery after disaster.
+
+Final selection:
+**Heatwave and urban heat for Khujand city, Tajikistan.**
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 3. Final project concept</span>
+
+<span class="hljs-comment">## Project name</span>
+**HeatShield Khujand**
+
+<span class="hljs-comment">## Parent concept</span>
+**ResilienceOS Heat**
+
+<span class="hljs-comment">## One-sentence pitch</span>
+HeatShield Khujand combines satellite heat maps, weather and heat-stress data, population vulnerability, critical facilities and optional local sensors to rank where Khujand should act first before and during heatwaves.
+
+<span class="hljs-comment">## Core thesis</span>
+Khujand already faces dangerous heat thresholds, but official weather forecasts alone do not identify street-level urban heat exposure or vulnerable people. HeatShield Khujand transforms forecasts, satellite data, population vulnerability and local sensors into ranked actions for schools, clinics, markets and neighborhoods.
+
+<span class="hljs-comment">## Main decision question</span>
+When a heatwave is forecast, where should Khujand act first?
+
+<span class="hljs-comment">## Avoid</span>
+Do not build a generic dashboard.
+Do not claim to forecast weather better than meteorological agencies.
+Do not fake datasets.
+Do not invent local health statistics.
+Do not claim street-level accuracy without validation.
+
+<span class="hljs-comment">## Build instead</span>
+A reproducible geospatial data pipeline and prototype decision-support tool.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 4. Why Khujand is a strong pilot city</span>
+
+Khujand is in Sughd Region in northern Tajikistan. It has hot, dry summers and is located in a valley/lowland setting with likely strong urban heat contrasts between built surfaces, bare soil, irrigated/vegetated areas and the Syr Darya river corridor.
+
+The project is especially defensible because Tajikistan has heatwave early-action logic, but local heat-health impact data appears weak.
+
+Important reasoning:
+<span class="hljs-literal">-</span> Heatwaves in Tajikistan are officially recognized as a risk.
+<span class="hljs-literal">-</span> Khujand/Sughd appears in heatwave threshold logic.
+<span class="hljs-literal">-</span> There is a documented lack of local data connecting heatwaves to morbidity and mortality.
+<span class="hljs-literal">-</span> Urban heat islands can be missed by official weather stations because stations often do not represent dense urban streets.
+<span class="hljs-literal">-</span> Khujand has useful urban contrasts: dense neighborhoods, markets, roads, public institutions, bare land, river corridor and vegetation.
+
+Strong framing:
+&gt; Tajikistan has heat warnings. What it lacks is high-resolution local action intelligence.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 5. Core scientific mechanism for heat risk</span>
+
+Heat risk is not only air temperature. It depends on:
+<span class="hljs-literal">-</span> air temperature
+<span class="hljs-literal">-</span> humidity
+<span class="hljs-literal">-</span> wind
+<span class="hljs-literal">-</span> solar radiation
+<span class="hljs-literal">-</span> nighttime cooling
+<span class="hljs-literal">-</span> land surface temperature
+<span class="hljs-literal">-</span> built-up density
+<span class="hljs-literal">-</span> vegetation/shade
+<span class="hljs-literal">-</span> housing material
+<span class="hljs-literal">-</span> population age structure
+<span class="hljs-literal">-</span> health vulnerability
+<span class="hljs-literal">-</span> access to cooling and water
+<span class="hljs-literal">-</span> clinic capacity
+<span class="hljs-literal">-</span> ability to receive warnings
+
+Urban heat island mechanism:
+<span class="hljs-literal">-</span> Concrete, asphalt and roofs absorb solar radiation.
+<span class="hljs-literal">-</span> Dense urban surfaces store heat during the day.
+<span class="hljs-literal">-</span> At night, stored heat is released slowly.
+<span class="hljs-literal">-</span> Low tree cover reduces shade and evapotranspiration.
+<span class="hljs-literal">-</span> Weak ventilation corridors reduce cooling.
+<span class="hljs-literal">-</span> Poorly insulated buildings increase indoor heat exposure.
+
+Human health mechanism:
+<span class="hljs-literal">-</span> The body cools through sweating and blood-flow regulation.
+<span class="hljs-literal">-</span> High humidity reduces sweat evaporation.
+<span class="hljs-literal">-</span> Hot nights reduce physiological recovery.
+<span class="hljs-literal">-</span> Children, elderly people, pregnant women, outdoor workers and people with chronic diseases are more vulnerable.
+<span class="hljs-literal">-</span> Heat can worsen cardiovascular, renal and respiratory stress.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 6. Key project modules</span>
+
+<span class="hljs-comment">### Module 1: Heat hazard map</span>
+<span class="hljs-attribute">Inputs</span>:
+<span class="hljs-literal">-</span> air temperature
+<span class="hljs-literal">-</span> land surface temperature
+<span class="hljs-literal">-</span> UTCI or other heat-stress index
+<span class="hljs-literal">-</span> hot days above thresholds
+<span class="hljs-literal">-</span> hot nights
+<span class="hljs-literal">-</span> heatwave periods lasting 3 to 5 days
+
+<span class="hljs-attribute">Outputs</span>:
+<span class="hljs-literal">-</span> historical extreme heat days
+<span class="hljs-literal">-</span> seasonal heat maps
+<span class="hljs-literal">-</span> heatwave exceedance frequency
+<span class="hljs-literal">-</span> dangerous days based on official or proxy thresholds
+
+<span class="hljs-comment">### Module 2: Urban heat island map</span>
+<span class="hljs-attribute">Inputs</span>:
+<span class="hljs-literal">-</span> Landsat land surface temperature
+<span class="hljs-literal">-</span> MODIS day/night land surface temperature
+<span class="hljs-literal">-</span> Sentinel-2 NDVI
+<span class="hljs-literal">-</span> Dynamic World land cover
+<span class="hljs-literal">-</span> GHSL built-up density
+<span class="hljs-literal">-</span> OSM roads/buildings
+<span class="hljs-literal">-</span> distance to river/parks/vegetation
+
+<span class="hljs-attribute">Outputs</span>:
+<span class="hljs-literal">-</span> hottest urban surfaces
+<span class="hljs-literal">-</span> cool corridors
+<span class="hljs-literal">-</span> vegetation deficit
+<span class="hljs-literal">-</span> built-up heat correlation
+<span class="hljs-literal">-</span> river-to-city heat gradient
+
+<span class="hljs-comment">### Module 3: Vulnerability and exposure map</span>
+<span class="hljs-attribute">Inputs</span>:
+<span class="hljs-literal">-</span> WorldPop population
+<span class="hljs-literal">-</span> WorldPop age/sex layers if available
+<span class="hljs-literal">-</span> Tajikistan census if downloadable
+<span class="hljs-literal">-</span> schools, clinics, markets, roads from OSM/HDX
+<span class="hljs-literal">-</span> distance to cooling assets
+<span class="hljs-literal">-</span> local proxies for poverty/housing if available
+
+<span class="hljs-attribute">Outputs</span>:
+<span class="hljs-literal">-</span> exposed population
+<span class="hljs-literal">-</span> vulnerable population hotspots
+<span class="hljs-literal">-</span> priority schools
+<span class="hljs-literal">-</span> priority clinics
+<span class="hljs-literal">-</span> priority public spaces
+
+<span class="hljs-comment">### Module 4: Action recommender</span>
+Possible recommendations:
+<span class="hljs-literal">-</span> open cooling centers
+<span class="hljs-literal">-</span> deploy water points
+<span class="hljs-literal">-</span> distribute oral rehydration salts
+<span class="hljs-literal">-</span> send SMS/Telegram heat alerts
+<span class="hljs-literal">-</span> check elderly and disabled residents
+<span class="hljs-literal">-</span> adjust school schedules
+<span class="hljs-literal">-</span> advise outdoor workers
+<span class="hljs-literal">-</span> install shade canopy
+<span class="hljs-literal">-</span> paint cool roofs
+<span class="hljs-literal">-</span> plant trees
+<span class="hljs-literal">-</span> create green/shaded corridors
+<span class="hljs-literal">-</span> prepare clinics for heat cases
+
+<span class="hljs-comment">### Module 5: Sensor validation</span>
+Optional but important:
+Deploy 10 to 20 low-cost temperature/humidity sensors to validate satellite/reanalysis estimates.
+
+Candidate sensor locations:
+<span class="hljs-literal">-</span> dense residential district
+<span class="hljs-literal">-</span> schoolyard
+<span class="hljs-literal">-</span> clinic entrance
+<span class="hljs-literal">-</span> market/bazaar
+<span class="hljs-literal">-</span> bus stop
+<span class="hljs-literal">-</span> riverbank/park
+<span class="hljs-literal">-</span> bare-soil edge
+<span class="hljs-literal">-</span> high-traffic corridor
+<span class="hljs-literal">-</span> shaded street
+<span class="hljs-literal">-</span> exposed asphalt/public square
+
+Sensor-placement goal:
+&gt; Place sensors where information value is highest, not randomly.
+
+<span class="hljs-attribute">Criteria</span>:
+<span class="hljs-literal">-</span> predicted hottest areas
+<span class="hljs-literal">-</span> high population exposure
+<span class="hljs-literal">-</span> vulnerable facilities
+<span class="hljs-literal">-</span> low vegetation
+<span class="hljs-literal">-</span> far from official station
+<span class="hljs-literal">-</span> different urban surface types
+<span class="hljs-literal">-</span> practical accessibility and safety
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 7. Initial heat-risk formula</span>
+
+Use this first prototype score:</pre></div>
+<p>text</p>
+<p>Khujand Heat Risk Score =</p>
+<p>0.25 × normalized Landsat LST anomaly</p>
+<p>+ 0.20 × UTCI extreme-heat frequency</p>
+<p>+ 0.15 × inverse NDVI</p>
+<p>+ 0.15 × GHSL built-up density</p>
+<p>+ 0.15 × vulnerable population density</p>
+<p>+ 0.10 × distance from cooling assets</p>
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">plaintext</span></div><pre class="code-block hljs">Cooling assets may include:
+<span class="hljs-literal">-</span> parks
+<span class="hljs-literal">-</span> riverbank green areas
+<span class="hljs-literal">-</span> clinics
+<span class="hljs-literal">-</span> schools with shade
+<span class="hljs-literal">-</span> public buildings usable as cooling spaces
+<span class="hljs-literal">-</span> water points
+<span class="hljs-literal">-</span> shaded markets or public structures
+
+Create separate scores:
+<span class="hljs-literal">-</span> School Heat Priority Score
+<span class="hljs-literal">-</span> Clinic Heat Priority Score
+<span class="hljs-literal">-</span> Market Heat Priority Score
+<span class="hljs-literal">-</span> Residential Vulnerability Score
+<span class="hljs-literal">-</span> Outdoor Worker Exposure Score
+<span class="hljs-literal">-</span> Sensor Placement Priority Score
+<span class="hljs-literal">-</span> Cool Roof Priority Score
+
+Do not treat the score as a final scientific truth. Treat it as an interpretable MVP index that can be calibrated later with local sensor and health data.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 8. Core datasets to investigate and use</span>
+
+<span class="hljs-comment">### 8.1 Weather and heat-stress data</span>
+
+<span class="hljs-comment">#### ERA5</span>
+Use for historical weather and climate variables:
+<span class="hljs-literal">-</span> air temperature
+<span class="hljs-literal">-</span> dew point
+<span class="hljs-literal">-</span> wind
+<span class="hljs-literal">-</span> radiation
+<span class="hljs-literal">-</span> humidity proxies
+<span class="hljs-literal">-</span> reanalysis baseline
+
+<span class="hljs-comment">#### ERA5-Land</span>
+Use for land-surface variables:
+<span class="hljs-literal">-</span> soil moisture
+<span class="hljs-literal">-</span> skin temperature
+<span class="hljs-literal">-</span> land variables
+<span class="hljs-literal">-</span> runoff if needed later
+
+<span class="hljs-comment">#### ERA5-HEAT / UTCI</span>
+Use for human thermal stress. This is useful because UTCI is closer to human experience than air temperature alone.
+
+<span class="hljs-comment">#### NASA POWER</span>
+Use for point meteorological time series near Khujand:
+<span class="hljs-literal">-</span> temperature
+<span class="hljs-literal">-</span> humidity/dew point
+<span class="hljs-literal">-</span> wind
+<span class="hljs-literal">-</span> solar radiation
+<span class="hljs-literal">-</span> precipitation
+
+NASA POWER’s hourly API returns analysis-ready solar and meteorological time series for applications. The API can be used directly from Python if internet access is available. Source: NASA POWER documentation.
+
+<span class="hljs-comment">#### NOAA ISD / Meteostat</span>
+Use for station-based historical weather if available for Khujand airport or nearby stations.
+
+<span class="hljs-comment">#### Tajik Hydromet</span>
+Use if accessible for:
+<span class="hljs-literal">-</span> official warnings
+<span class="hljs-literal">-</span> official forecast thresholds
+<span class="hljs-literal">-</span> local station data
+<span class="hljs-literal">-</span> validation of heatwave dates
+
+<span class="hljs-attribute">Important</span>:
+If Tajik Hydromet data is not available through API, document how to request it or manually incorporate it later.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### 8.2 Urban land surface temperature</span>
+
+<span class="hljs-comment">#### Landsat 8/9 Collection 2 Level 2 Surface Temperature</span>
+Use for high-resolution urban heat maps.
+This dataset provides surface reflectance and land surface temperature from Landsat OLI/TIRS sensors. Landsat Level 2 surface temperature is a key dataset for urban heat mapping.
+
+<span class="hljs-attribute">Source</span>: Google Earth Engine Landsat 8 Level 2 dataset and USGS Landsat surface temperature documentation.
+
+<span class="hljs-comment">#### Landsat 5/7 historical thermal data</span>
+Use for long-term urban heat change, if needed.
+
+<span class="hljs-comment">#### MODIS MOD11A1 daily land surface temperature</span>
+Use for daily day/night land surface temperature at coarser spatial resolution.
+
+<span class="hljs-comment">#### ECOSTRESS</span>
+Optional advanced layer for urban thermal snapshots if available and practical.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### 8.3 Vegetation, land cover and built-up data</span>
+
+<span class="hljs-comment">#### Sentinel-2 Level-2A</span>
+Use for:
+<span class="hljs-literal">-</span> NDVI
+<span class="hljs-literal">-</span> vegetation health
+<span class="hljs-literal">-</span> NDWI
+<span class="hljs-literal">-</span> water/vegetation cooling proxies
+<span class="hljs-literal">-</span> recent 10 m urban surface context
+
+<span class="hljs-comment">#### Dynamic World 10 m land cover</span>
+Use for:
+<span class="hljs-literal">-</span> built area
+<span class="hljs-literal">-</span> vegetation
+<span class="hljs-literal">-</span> water
+<span class="hljs-literal">-</span> bare soil
+<span class="hljs-literal">-</span> crops
+
+<span class="hljs-comment">#### GHSL built-up surface</span>
+Use for:
+<span class="hljs-literal">-</span> built-up density
+<span class="hljs-literal">-</span> urban expansion
+<span class="hljs-literal">-</span> settlement structure
+<span class="hljs-literal">-</span> urban intensity
+
+<span class="hljs-comment">#### OpenStreetMap / Geofabrik Tajikistan</span>
+Use for:
+<span class="hljs-literal">-</span> roads
+<span class="hljs-literal">-</span> buildings
+<span class="hljs-literal">-</span> schools
+<span class="hljs-literal">-</span> clinics
+<span class="hljs-literal">-</span> pharmacies
+<span class="hljs-literal">-</span> markets
+<span class="hljs-literal">-</span> parks
+<span class="hljs-literal">-</span> public facilities
+<span class="hljs-literal">-</span> bus stops if available
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### 8.4 Population and vulnerability</span>
+
+<span class="hljs-comment">#### WorldPop Tajikistan</span>
+Use for:
+<span class="hljs-literal">-</span> population density
+<span class="hljs-literal">-</span> population counts
+<span class="hljs-literal">-</span> 100 m population exposure if available
+
+WorldPop provides open gridded population data and works to ensure people are mapped and counted in decision making. HDX also lists Tajikistan population density datasets from WorldPop.
+
+<span class="hljs-comment">#### WorldPop age/sex layers</span>
+Use if available:
+<span class="hljs-literal">-</span> children
+<span class="hljs-literal">-</span> elderly groups
+<span class="hljs-literal">-</span> female population groups
+<span class="hljs-literal">-</span> age-based vulnerability
+
+<span class="hljs-comment">#### Tajikistan 2020 census</span>
+Use if downloadable:
+<span class="hljs-literal">-</span> population by district/city
+<span class="hljs-literal">-</span> age/sex distribution
+<span class="hljs-literal">-</span> housing materials
+<span class="hljs-literal">-</span> household living conditions
+<span class="hljs-literal">-</span> settlement-level demographic tables
+
+<span class="hljs-comment">#### HDX / HOTOSM</span>
+Use for:
+<span class="hljs-literal">-</span> health facilities
+<span class="hljs-literal">-</span> schools if available
+<span class="hljs-literal">-</span> admin boundaries
+<span class="hljs-literal">-</span> humanitarian layers
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### 8.5 Health and air-quality data</span>
+
+Public local heat-health data is likely weak.
+
+Do not fake health outcomes.
+
+Possible future partnerships:
+<span class="hljs-literal">-</span> Khujand city health department
+<span class="hljs-literal">-</span> Sughd regional health authorities
+<span class="hljs-literal">-</span> hospitals
+<span class="hljs-literal">-</span> ambulance services
+<span class="hljs-literal">-</span> Red Crescent Society of Tajikistan
+<span class="hljs-literal">-</span> schools and kindergartens
+<span class="hljs-literal">-</span> mahalla/community leaders
+
+Possible anonymized daily indicators:
+<span class="hljs-literal">-</span> ambulance calls
+<span class="hljs-literal">-</span> heatstroke cases
+<span class="hljs-literal">-</span> dehydration cases
+<span class="hljs-literal">-</span> cardiovascular complaints
+<span class="hljs-literal">-</span> respiratory complaints
+<span class="hljs-literal">-</span> emergency admissions
+<span class="hljs-literal">-</span> school absences
+<span class="hljs-literal">-</span> mortality counts if legally and ethically accessible
+
+Air-quality data:
+Use only if reliable data exists.
+If not available, document it as a gap.
+Heat and air pollution can compound health risks, but the MVP should not depend on air quality unless data is available.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 9. Places inside Khujand to analyze first</span>
+
+Prioritize urban typologies, not only administrative areas.
+
+<span class="hljs-comment">### 9.1 Dense residential microdistricts</span>
+Look for:
+<span class="hljs-literal">-</span> high building density
+<span class="hljs-literal">-</span> low tree cover
+<span class="hljs-literal">-</span> many flat or metal/concrete roofs
+<span class="hljs-literal">-</span> limited open green space
+<span class="hljs-literal">-</span> high nighttime heat retention
+<span class="hljs-literal">-</span> many children and elderly people
+
+<span class="hljs-comment">### 9.2 Schools and kindergartens</span>
+Core question:
+&gt; Which schools and kindergartens need shade, cool roofs, water points or adjusted summer schedules first?
+
+<span class="hljs-comment">### 9.3 Hospitals, clinics and pharmacies</span>
+Clinics matter because:
+<span class="hljs-literal">-</span> vulnerable people go there
+<span class="hljs-literal">-</span> facilities must function during heatwaves
+<span class="hljs-literal">-</span> waiting areas may expose people to outdoor heat
+
+<span class="hljs-comment">### 9.4 Panjshanbe market and other bazaars/public spaces</span>
+Markets are likely high-exposure places because of:
+<span class="hljs-literal">-</span> outdoor/semi-outdoor workers
+<span class="hljs-literal">-</span> shoppers
+<span class="hljs-literal">-</span> elderly people
+<span class="hljs-literal">-</span> low shade
+<span class="hljs-literal">-</span> hot surfaces
+<span class="hljs-literal">-</span> crowds
+
+<span class="hljs-comment">### 9.5 Transport corridors and bus stops</span>
+<span class="hljs-attribute">Analyze</span>:
+<span class="hljs-literal">-</span> asphalt heat
+<span class="hljs-literal">-</span> low shade
+<span class="hljs-literal">-</span> pedestrian exposure
+<span class="hljs-literal">-</span> waiting time
+<span class="hljs-literal">-</span> traffic emissions
+<span class="hljs-literal">-</span> distance to water/shade
+
+<span class="hljs-comment">### 9.6 Syr Darya river and vegetation cooling gradient</span>
+<span class="hljs-attribute">Compare</span>:
+<span class="hljs-literal">-</span> riverbank/vegetated areas
+<span class="hljs-literal">-</span> parks
+<span class="hljs-literal">-</span> irrigated land
+<span class="hljs-literal">-</span> dense built districts
+<span class="hljs-literal">-</span> bare soil
+<span class="hljs-literal">-</span> industrial/road surfaces
+
+Possible finding:
+&gt; Distance from vegetation and river cooling corridors predicts neighborhood heat exposure.
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 10. Research questions to answer</span>
+
+<span class="hljs-comment">### Question 1</span>
+Where are Khujand’s urban heat islands?
+
+<span class="hljs-attribute">Data</span>:
+<span class="hljs-literal">-</span> Landsat LST
+<span class="hljs-literal">-</span> MODIS LST
+<span class="hljs-literal">-</span> Sentinel-2 NDVI
+<span class="hljs-literal">-</span> GHSL built-up
+<span class="hljs-literal">-</span> Dynamic World land cover
+
+<span class="hljs-attribute">Output</span>:
+<span class="hljs-literal">-</span> 30 m summer surface heat map
+<span class="hljs-literal">-</span> top 5 percent hottest pixels
+<span class="hljs-literal">-</span> comparison by land-cover type
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### Question 2</span>
+Who is most exposed?
+
+<span class="hljs-attribute">Data</span>:
+<span class="hljs-literal">-</span> WorldPop
+<span class="hljs-literal">-</span> census tables
+<span class="hljs-literal">-</span> OSM buildings
+<span class="hljs-literal">-</span> schools
+<span class="hljs-literal">-</span> clinics
+<span class="hljs-literal">-</span> markets
+
+<span class="hljs-attribute">Output</span>:
+<span class="hljs-literal">-</span> vulnerable-population heat exposure index
+<span class="hljs-literal">-</span> exposed children/elderly estimate if age layers exist
+<span class="hljs-literal">-</span> facility exposure ranking
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### Question 3</span>
+Does official/station temperature underestimate city heat?
+
+<span class="hljs-attribute">Data</span>:
+<span class="hljs-literal">-</span> Khujand airport/station weather
+<span class="hljs-literal">-</span> low-cost sensors
+<span class="hljs-literal">-</span> Landsat LST
+<span class="hljs-literal">-</span> MODIS day/night LST
+<span class="hljs-literal">-</span> NASA POWER or ERA5
+
+<span class="hljs-attribute">Output</span>:
+<span class="hljs-literal">-</span> station-vs-street heat bias
+<span class="hljs-literal">-</span> station-vs-satellite comparison
+<span class="hljs-literal">-</span> sensor validation plan
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">### Question 4</span>
+Where should cooling interventions go first?
+
+<span class="hljs-attribute">Data</span>:
+<span class="hljs-literal">-</span> heat-risk score
+<span class="hljs-literal">-</span> schools/clinics
+<span class="hljs-literal">-</span> population
+<span class="hljs-literal">-</span> shade/vegetation
+<span class="hljs-literal">-</span> cost assumptions
+
+<span class="hljs-attribute">Output</span>:
+<span class="hljs-literal">-</span> top 20 intervention sites
+<span class="hljs-literal">-</span> recommended actions per site
+<span class="hljs-literal">-</span> cost-per-person-protected estimate
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 11. MVP outputs</span>
+
+The first working prototype should produce:
+
+1. Khujand boundary or bounding box map
+2. OSM roads/buildings/facilities map
+3. schools/clinics/markets layer
+4. NASA POWER weather time series for Khujand
+5. Landsat summer land surface temperature map
+6. Sentinel-2 NDVI map
+7. GHSL or Dynamic World built-up map
+8. WorldPop population exposure map
+9. combined Heat Risk Score raster or grid
+10. top 20 priority sites table
+11. sensor-placement priority map
+12. simple Folium/HTML map or notebook outputs
+13. documentation of missing data and manual download/API requirements
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 12. Technical stack</span>
+
+Use Python.
+
+Recommended packages:
+<span class="hljs-literal">-</span> pandas
+<span class="hljs-literal">-</span> geopandas
+<span class="hljs-literal">-</span> numpy
+<span class="hljs-literal">-</span> shapely
+<span class="hljs-literal">-</span> pyproj
+<span class="hljs-literal">-</span> rasterio
+<span class="hljs-literal">-</span> rioxarray
+<span class="hljs-literal">-</span> xarray
+<span class="hljs-literal">-</span> matplotlib
+<span class="hljs-literal">-</span> folium
+<span class="hljs-literal">-</span> osmnx
+<span class="hljs-literal">-</span> requests
+<span class="hljs-literal">-</span> earthengine-api
+<span class="hljs-literal">-</span> geemap if useful
+<span class="hljs-literal">-</span> contextily if useful
+<span class="hljs-literal">-</span> scikit-learn only if needed later
+<span class="hljs-literal">-</span> jupyter
+
+Possible additional tools:
+<span class="hljs-literal">-</span> Google Earth Engine for Landsat/Sentinel/Dynamic World/GHSL
+<span class="hljs-literal">-</span> local GeoTIFF processing through rasterio/rioxarray
+<span class="hljs-literal">-</span> Folium for interactive maps
+<span class="hljs-literal">-</span> OSMnx for OSM extraction
+<span class="hljs-literal">-</span> GitHub repo for reproducibility
+
+<span class="hljs-literal">-</span>--
+
+<span class="hljs-comment">## 13. Desired project structure</span>
+
+Create this repo structure:</pre></div>
+<p>text</p>
+<p>heatshield-khujand/</p>
+<p>  README.md</p>
+<p>  requirements.txt</p>
+<p>  .gitignore</p>
+<p>  data/</p>
+<p>    raw/</p>
+<p>    processed/</p>
+<p>    external/</p>
+<p>  notebooks/</p>
+<p>    01_khujand_data_inventory.ipynb</p>
+<p>    02_landsat_lst_ndvi.ipynb</p>
+<p>    03_population_exposure.ipynb</p>
+<p>    04_heat_risk_score.ipynb</p>
+<p>  src/</p>
+<p>    __init__.py</p>
+<p>    config.py</p>
+<p>    fetch_nasa_power.py</p>
+<p>    fetch_osm.py</p>
+<p>    gee_utils.py</p>
+<p>    raster_utils.py</p>
+<p>    scoring.py</p>
+<p>    plotting.py</p>
+<p>  outputs/</p>
+<p>    maps/</p>
+<p>    charts/</p>
+<p>    tables/</p>
+<p>  docs/</p>
+<p>    project_context.md</p>
+<p>    data_inventory.md</p>
+<p>    methodology.md</p>
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">plaintext</span></div><pre class="code-block hljs">---
+
+<span class="hljs-section">## 14. First Codex task</span>
+
+Start with data inventory and repo scaffolding.
+
+Tasks:
+
+<span class="hljs-bullet">1.</span> Create the folder structure.
+<span class="hljs-bullet">2.</span> Create <span class="hljs-code">`requirements.txt`</span>.
+<span class="hljs-bullet">3.</span> Create <span class="hljs-code">`src/config.py`</span> with Khujand coordinates and a reasonable bounding box.
+<span class="hljs-bullet">4.</span> Create <span class="hljs-code">`src/fetch_nasa_power.py`</span> to fetch daily or hourly weather for Khujand from NASA POWER if internet access works.
+<span class="hljs-bullet">5.</span> Create <span class="hljs-code">`src/fetch_osm.py`</span> to fetch roads, buildings, schools, clinics, pharmacies, markets, parks and water features from OpenStreetMap using OSMnx.
+<span class="hljs-bullet">6.</span> Create <span class="hljs-code">`notebooks/01_khujand_data_inventory.ipynb`</span> or a Python script equivalent.
+<span class="hljs-bullet">7.</span> Produce:
+<span class="hljs-bullet">   -</span> basic map of Khujand area
+<span class="hljs-bullet">   -</span> OSM roads/facilities map
+<span class="hljs-bullet">   -</span> NASA POWER weather time series chart
+<span class="hljs-bullet">   -</span> data inventory table
+<span class="hljs-bullet">8.</span> Document datasets requiring authentication or manual download:
+<span class="hljs-bullet">   -</span> Google Earth Engine for Landsat/Sentinel/Dynamic World/GHSL
+<span class="hljs-bullet">   -</span> WorldPop/HDX raster download
+<span class="hljs-bullet">   -</span> Tajik Hydromet official data if not API-accessible
+
+Important rules:
+<span class="hljs-bullet">-</span> Do not fake data.
+<span class="hljs-bullet">-</span> If a dataset cannot be accessed automatically, write exact instructions.
+<span class="hljs-bullet">-</span> Keep code modular.
+<span class="hljs-bullet">-</span> Add comments explaining assumptions.
+<span class="hljs-bullet">-</span> Make outputs reproducible.
+<span class="hljs-bullet">-</span> Use clear TODOs.
+
+---
+
+<span class="hljs-section">## 15. Second Codex task, after scaffolding works</span>
+
+Implement satellite and raster workflow.
+
+Tasks:
+<span class="hljs-bullet">1.</span> Authenticate or prepare Google Earth Engine.
+<span class="hljs-bullet">2.</span> Fetch Landsat 8/9 Collection 2 Level 2 images for Khujand summers from 2013 to present.
+<span class="hljs-bullet">3.</span> Mask clouds.
+<span class="hljs-bullet">4.</span> Calculate land surface temperature in Celsius from Landsat ST band.
+<span class="hljs-bullet">5.</span> Create summer median LST map.
+<span class="hljs-bullet">6.</span> Create extreme heat surface map, such as 90th or 95th percentile LST.
+<span class="hljs-bullet">7.</span> Fetch Sentinel-2 summer imagery.
+<span class="hljs-bullet">8.</span> Calculate NDVI.
+<span class="hljs-bullet">9.</span> Compare LST with NDVI and built-up data.
+<span class="hljs-bullet">10.</span> Export maps to GeoTIFF and PNG/HTML outputs.
+
+Important:
+<span class="hljs-bullet">-</span> Document exact scale, projection, date range and cloud filtering.
+<span class="hljs-bullet">-</span> Use Landsat surface temperature product rather than inventing a thermal conversion unless necessary.
+<span class="hljs-bullet">-</span> If using GEE, keep code in <span class="hljs-code">`src/gee_utils.py`</span> plus notebook examples.
+
+---
+
+<span class="hljs-section">## 16. Third Codex task</span>
+
+Implement population and exposure.
+
+Tasks:
+<span class="hljs-bullet">1.</span> Download or manually load WorldPop Tajikistan population raster.
+<span class="hljs-bullet">2.</span> Clip to Khujand bounding box.
+<span class="hljs-bullet">3.</span> Resample/reproject to match LST grid.
+<span class="hljs-bullet">4.</span> Compute population exposed to top 10 percent hottest pixels.
+<span class="hljs-bullet">5.</span> Overlay schools, clinics, markets and residential zones.
+<span class="hljs-bullet">6.</span> Create ranked exposure tables:
+<span class="hljs-bullet">   -</span> top exposed schools
+<span class="hljs-bullet">   -</span> top exposed clinics
+<span class="hljs-bullet">   -</span> top exposed markets/public spaces
+<span class="hljs-bullet">   -</span> top exposed residential grids
+
+---
+
+<span class="hljs-section">## 17. Fourth Codex task</span>
+
+Implement Heat Risk Score.
+
+Tasks:
+<span class="hljs-bullet">1.</span> Normalize each layer 0 to 1:
+<span class="hljs-bullet">   -</span> LST anomaly
+<span class="hljs-bullet">   -</span> UTCI or heatwave frequency
+<span class="hljs-bullet">   -</span> inverse NDVI
+<span class="hljs-bullet">   -</span> built-up density
+<span class="hljs-bullet">   -</span> population density
+<span class="hljs-bullet">   -</span> distance from cooling assets
+<span class="hljs-bullet">2.</span> Combine them using the MVP formula:</pre></div>
+<p>text</p>
+<p>   0.25 LST + 0.20 UTCI + 0.15 inverse NDVI + 0.15 built-up + 0.15 population + 0.10 distance from cooling assets</p>
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">plaintext</span></div><pre class="code-block hljs"><span class="hljs-number">3</span><span class="hljs-string">.</span> <span class="hljs-string">Produce</span> <span class="hljs-string">raster/grid</span> <span class="hljs-string">output.</span>
+<span class="hljs-number">4</span><span class="hljs-string">.</span> <span class="hljs-string">Create</span> <span class="hljs-string">top</span> <span class="hljs-number">20</span> <span class="hljs-string">priority</span> <span class="hljs-string">intervention</span> <span class="hljs-string">sites.</span>
+<span class="hljs-attr">5. Add simple explanations for each ranked site:</span>
+   <span class="hljs-bullet">-</span> <span class="hljs-string">why</span> <span class="hljs-string">it</span> <span class="hljs-string">is</span> <span class="hljs-string">high</span> <span class="hljs-string">risk</span>
+   <span class="hljs-bullet">-</span> <span class="hljs-string">who</span> <span class="hljs-string">is</span> <span class="hljs-string">exposed</span>
+   <span class="hljs-bullet">-</span> <span class="hljs-string">suggested</span> <span class="hljs-string">intervention</span>
+
+<span class="hljs-meta">---
+</span>
+<span class="hljs-comment">## 18. Fifth Codex task</span>
+
+<span class="hljs-string">Create</span> <span class="hljs-string">dashboard/prototype</span> <span class="hljs-string">output.</span>
+
+<span class="hljs-attr">Options:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">Folium</span> <span class="hljs-string">interactive</span> <span class="hljs-string">HTML</span> <span class="hljs-string">map</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">Streamlit</span> <span class="hljs-string">dashboard</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">static</span> <span class="hljs-string">notebook</span> <span class="hljs-string">with</span> <span class="hljs-string">maps</span> <span class="hljs-string">and</span> <span class="hljs-string">charts</span>
+
+<span class="hljs-attr">Minimum dashboard layers:</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">LST</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">NDVI</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">built-up</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">population</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">schools/clinics/markets</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">heat-risk</span> <span class="hljs-string">score</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">top</span> <span class="hljs-string">priority</span> <span class="hljs-string">sites</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">sensor</span> <span class="hljs-string">placement</span> <span class="hljs-string">candidates</span>
+
+<span class="hljs-meta">---
+</span>
+<span class="hljs-comment">## 19. Important external source notes for Codex</span>
+
+<span class="hljs-attr">Use these as reference points when writing documentation:</span>
+
+<span class="hljs-bullet">-</span> <span class="hljs-string">OpenAI</span> <span class="hljs-string">Codex</span> <span class="hljs-string">CLI</span> <span class="hljs-string">can</span> <span class="hljs-string">read,</span> <span class="hljs-string">change</span> <span class="hljs-string">and</span> <span class="hljs-string">run</span> <span class="hljs-string">code</span> <span class="hljs-string">in</span> <span class="hljs-string">the</span> <span class="hljs-string">selected</span> <span class="hljs-string">local</span> <span class="hljs-string">directory.</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">NASA</span> <span class="hljs-string">POWER</span> <span class="hljs-string">hourly</span> <span class="hljs-string">API</span> <span class="hljs-string">returns</span> <span class="hljs-string">analysis-ready</span> <span class="hljs-string">solar</span> <span class="hljs-string">and</span> <span class="hljs-string">meteorological</span> <span class="hljs-string">time</span> <span class="hljs-string">series.</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">Landsat</span> <span class="hljs-number">8</span> <span class="hljs-string">Collection</span> <span class="hljs-number">2</span> <span class="hljs-string">Level</span> <span class="hljs-number">2</span> <span class="hljs-string">provides</span> <span class="hljs-string">surface</span> <span class="hljs-string">reflectance</span> <span class="hljs-string">and</span> <span class="hljs-string">land</span> <span class="hljs-string">surface</span> <span class="hljs-string">temperature.</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">WorldPop</span> <span class="hljs-string">provides</span> <span class="hljs-string">gridded</span> <span class="hljs-string">population</span> <span class="hljs-string">data</span> <span class="hljs-string">and</span> <span class="hljs-string">HDX</span> <span class="hljs-string">hosts</span> <span class="hljs-string">Tajikistan</span> <span class="hljs-string">population</span> <span class="hljs-string">datasets.</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">Do</span> <span class="hljs-string">not</span> <span class="hljs-string">fake</span> <span class="hljs-string">Tajik</span> <span class="hljs-string">Hydromet</span> <span class="hljs-string">data.</span> <span class="hljs-string">If</span> <span class="hljs-string">not</span> <span class="hljs-string">accessible,</span> <span class="hljs-string">list</span> <span class="hljs-string">it</span> <span class="hljs-string">as</span> <span class="hljs-string">a</span> <span class="hljs-string">future</span> <span class="hljs-string">partnership/manual</span> <span class="hljs-string">data</span> <span class="hljs-string">source.</span>
+<span class="hljs-bullet">-</span> <span class="hljs-string">Use</span> <span class="hljs-string">Google</span> <span class="hljs-string">Earth</span> <span class="hljs-string">Engine</span> <span class="hljs-string">if</span> <span class="hljs-string">possible</span> <span class="hljs-string">for</span> <span class="hljs-string">Landsat/Sentinel/GHSL/Dynamic</span> <span class="hljs-string">World.</span>
+
+<span class="hljs-meta">---
+</span>
+<span class="hljs-comment">## 20. First prompt to run in Codex</span>
+
+<span class="hljs-attr">Use this exact prompt first:</span></pre></div>
+<p>text</p>
+<p>You are helping me build HeatShield Khujand, a climate-tech prototype for heatwave and urban heat resilience in Khujand, Tajikistan.</p>
+
+<p>Read README.md and docs/project_context.md if they exist. If they do not exist, create them using the project context I provide.</p>
+
+<p>Your first job is to create a reproducible Python geospatial project scaffold and a first data-inventory workflow.</p>
+
+<p>Tasks:</p>
+<ol><li>Create this structure:</li></ol>
+<p>   data/raw, data/processed, data/external, notebooks, src, outputs/maps, outputs/charts, outputs/tables, docs.</p>
+<ol><li>Create requirements.txt with pandas, geopandas, numpy, shapely, pyproj, rasterio, rioxarray, xarray, matplotlib, folium, osmnx, requests, earthengine-api, geemap, jupyter.</li><li>Create src/config.py with:<ul><li>Khujand center coordinates</li><li>a reasonable bounding box around the city</li><li>default output paths</li><li>default date ranges for summer analysis</li></ul></li><li>Create src/fetch_nasa_power.py:<ul><li>fetch NASA POWER daily or hourly meteorological data for Khujand</li><li>include temperature, humidity/dew point, wind, precipitation and solar radiation if available</li><li>save CSV into data/raw or data/processed</li><li>fail gracefully if internet or API access is unavailable</li></ul></li><li>Create src/fetch_osm.py:<ul><li>use OSMnx to fetch roads, buildings, schools, clinics, pharmacies, markets, parks and water features for the Khujand bounding box</li><li>save GeoPackage or GeoJSON files</li><li>fail gracefully if OSM access is unavailable</li></ul></li><li>Create notebooks/01_khujand_data_inventory.ipynb or an equivalent script:<ul><li>load the NASA POWER output if available</li><li>load the OSM outputs if available</li><li>make a basic map of Khujand</li><li>make a weather time series chart</li><li>create a data inventory table explaining what is available, what needs authentication, and what requires manual download</li></ul></li><li>Create docs/data_inventory.md with dataset status:<ul><li>NASA POWER</li><li>OpenStreetMap</li><li>Google Earth Engine Landsat</li><li>Sentinel-2</li><li>Dynamic World</li><li>GHSL</li><li>WorldPop</li><li>Tajik Hydromet</li><li>Tajikistan census</li><li>health/ambulance data</li></ul></li><li>Do not fake data. If access fails, write exact next steps.</li><li>Keep code modular and readable.</li><li>At the end, summarize what files you created and how I should run the first workflow.</li></ol>
+
+<div class="code-wrapper"><div class="code-header"><span class="code-lang">plaintext</span></div><pre class="code-block hljs"><span class="hljs-comment">---</span>
+
+<span class="hljs-comment">## 21. How to judge whether Codex did a good job</span>
+
+Codex output <span class="hljs-keyword">is</span> acceptable <span class="hljs-keyword">if</span>:
+- repo structure <span class="hljs-keyword">is</span> created
+- requirements install cleanly <span class="hljs-keyword">or</span> nearly cleanly
+- config <span class="hljs-built_in">file</span> has Khujand location <span class="hljs-keyword">and</span> paths
+- NASA POWER function has <span class="hljs-built_in">real</span> API URL <span class="hljs-keyword">and</span> saves CSV
+- OSM function queries <span class="hljs-built_in">real</span> OSM features <span class="hljs-keyword">and</span> saves outputs
+- notebook/<span class="hljs-keyword">script</span> runs <span class="hljs-keyword">without</span> fake data
+- data inventory clearly says what <span class="hljs-keyword">is</span> automatic vs manual
+- no generated files pretend <span class="hljs-keyword">to</span> <span class="hljs-keyword">contain</span> data <span class="hljs-keyword">that</span> was <span class="hljs-keyword">not</span> downloaded
+- next TODOs are clear
+
+Codex output <span class="hljs-keyword">is</span> weak <span class="hljs-keyword">if</span>:
+- <span class="hljs-keyword">it</span> invents <span class="hljs-keyword">local</span> heat-health data
+- <span class="hljs-keyword">it</span> hardcodes fake maps
+- <span class="hljs-keyword">it</span> ignores authentication requirements
+- <span class="hljs-keyword">it</span> gives a generic climate dashboard
+- <span class="hljs-keyword">it</span> <span class="hljs-keyword">does</span> <span class="hljs-keyword">not</span> produce files
+- <span class="hljs-keyword">it</span> skips OSM/NASA POWER
+- <span class="hljs-keyword">it</span> <span class="hljs-keyword">does</span> <span class="hljs-keyword">not</span> document limitations
+
+<span class="hljs-comment">---</span>
+
+<span class="hljs-comment">## 22. Later challenge submission narrative</span>
+
+Use this narrative:
+
+Heatwaves <span class="hljs-keyword">in</span> Tajikistan are dangerous, <span class="hljs-keyword">but</span> <span class="hljs-keyword">local</span> governments often receive warnings <span class="hljs-keyword">as</span> general temperature forecasts. HeatShield Khujand turns those warnings <span class="hljs-keyword">into</span> <span class="hljs-keyword">local</span> action. It combines satellite land surface temperature, vegetation, built-up density, population exposure, schools, clinics, markets <span class="hljs-keyword">and</span> optional <span class="hljs-keyword">local</span> sensors <span class="hljs-keyword">to</span> identify who <span class="hljs-keyword">is</span> most exposed <span class="hljs-keyword">and</span> which interventions should come <span class="hljs-keyword">first</span>.
+
+Instead <span class="hljs-keyword">of</span> asking only “how hot will <span class="hljs-keyword">it</span> be?”, HeatShield asks:
+- which neighborhoods will suffer most?
+- which schools <span class="hljs-keyword">and</span> clinics are exposed?
+- <span class="hljs-keyword">where</span> are shade, water <span class="hljs-keyword">and</span> cooling centers missing?
+- <span class="hljs-keyword">where</span> should low-cost sensors be placed?
+- <span class="hljs-keyword">where</span> should cool roofs <span class="hljs-keyword">or</span> shade structures be prioritized?
+- how many people can be protected per dollar?
+
+This creates a bridge <span class="hljs-keyword">between</span> climate science, public health, urban planning <span class="hljs-keyword">and</span> emergency response.
+
+<span class="hljs-comment">---</span>
+
+<span class="hljs-comment">## 23. Final principle for Codex</span>
+
+Build <span class="hljs-keyword">the</span> project <span class="hljs-keyword">as</span> a serious, reproducible analytical prototype.
+
+The MVP should be simple <span class="hljs-keyword">but</span> <span class="hljs-built_in">real</span>:
+- <span class="hljs-built_in">real</span> public datasets
+- <span class="hljs-built_in">real</span> maps
+- <span class="hljs-built_in">real</span> code
+- clear limitations
+- practical <span class="hljs-keyword">local</span> actions
+- no fake claims</pre></div>
+
+
+<h2>Sources Codex should know about</h2>
+
+<p>Use these links in the repo documentation, not necessarily inside code:</p>
+
+<ul><li>Codex CLI can read, change and run code locally in a selected directory. <sup class="cite">[<a href="https://developers.openai.com/codex/cli?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Codex CLI">OpenAI Developers</a>]</sup></li><li>Landsat 8 Collection 2 Level 2 provides surface reflectance and land surface temperature, useful for urban heat mapping. <sup class="cite">[<a href="https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C02_T1_L2?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="USGS Landsat 8 Level 2, Collection 2, Tier 1">Google for Developers</a>]</sup></li><li>USGS explains that Landsat surface temperature measures Earth’s surface temperature in Kelvin and is a useful geophysical parameter. <sup class="cite">[<a href="https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Landsat Collection 2 Surface Temperature">USGS</a>]</sup></li><li>NASA POWER’s hourly API provides analysis-ready solar and meteorological time series for applications. <sup class="cite">[<a href="https://power.larc.nasa.gov/docs/services/api/temporal/hourly/?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="Docs | Data Services | Hourly API">Power</a>]</sup></li><li>WorldPop provides open gridded population data, and HDX lists Tajikistan population datasets. <sup class="cite">[<a href="https://data.humdata.org/organization/worldpop?utm_source=chatgpt.com" target="_blank" rel="noopener" class="cite-num" title="WorldPop | HDX">data.humdata.org</a>]</sup></li></ul></div></div>
+  </div>
+  <div id="lb"><img id="lb-img"></div>
+  <script>
+    const lb = document.getElementById('lb');
+    const lbImg = document.getElementById('lb-img');
+    document.querySelectorAll('.content img').forEach(img => {
+      img.addEventListener('click', () => { lbImg.src = img.src; lb.classList.add('open'); });
+    });
+    lb.addEventListener('click', e => { if (e.target === lb) lb.classList.remove('open'); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') lb.classList.remove('open'); });
+  </script>
+</body>
+</html>
